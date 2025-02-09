@@ -67,6 +67,9 @@ const ShareThoughts = () => {
               placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
             />
             <Button type="submit" className="w-full">Send Message</Button>
+            <p className="text-center text-muted-foreground mt-4">
+              Thank you for your interest in Aito, we look forward to hearing from you on how you find the experience.
+            </p>
           </form>
         </CardContent>
       </Card>
