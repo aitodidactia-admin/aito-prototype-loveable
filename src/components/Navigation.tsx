@@ -20,14 +20,16 @@ const Navigation = () => {
     <>
       <div className="flex items-center gap-2">
         {menuItems.map((item) => (
-          <Link
+          <Button
             key={item.path}
-            to={item.path}
-            className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors"
+            variant="ghost"
+            asChild
             onClick={() => setIsOpen(false)}
           >
-            <span>{item.label}</span>
-          </Link>
+            <Link to={item.path}>
+              {item.label}
+            </Link>
+          </Button>
         ))}
       </div>
       <div className="flex items-center gap-2">
