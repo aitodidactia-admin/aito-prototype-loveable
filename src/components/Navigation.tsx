@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Home, Info, Share } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -12,8 +12,8 @@ const Navigation = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const menuItems = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: Info, label: "About", path: "/about" },
+    { label: "Home", path: "/" },
+    { label: "About", path: "/about" },
   ];
 
   const NavContent = () => (
@@ -26,7 +26,6 @@ const Navigation = () => {
             className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors"
             onClick={() => setIsOpen(false)}
           >
-            <item.icon className="h-4 w-4" />
             <span>{item.label}</span>
           </Link>
         ))}
@@ -34,7 +33,6 @@ const Navigation = () => {
       <div className="flex items-center gap-2">
         <Button variant="ghost" asChild onClick={() => setIsOpen(false)}>
           <Link to="/share-thoughts">
-            <Share className="mr-2 h-4 w-4" />
             Share your thoughts
           </Link>
         </Button>
