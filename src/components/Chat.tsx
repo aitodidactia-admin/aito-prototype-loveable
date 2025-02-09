@@ -58,7 +58,7 @@ const Chat = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
       <Card className="glass p-8 max-w-md w-full space-y-8 animate-fade-up">
         <div className="space-y-6">
-          <h1 className="text-3xl font-semibold text-center">Voice Assistant</h1>
+          <h1 className="text-3xl font-semibold text-center">Let's have a chat</h1>
           
           <div className="flex flex-col items-center space-y-6">
             <Button
