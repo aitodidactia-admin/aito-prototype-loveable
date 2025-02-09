@@ -32,9 +32,11 @@ const Navigation = () => {
         ))}
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => setIsOpen(false)}>
-          <Share className="mr-2 h-4 w-4" />
-          Share your thoughts
+        <Button variant="ghost" asChild onClick={() => setIsOpen(false)}>
+          <Link to="/share-thoughts">
+            <Share className="mr-2 h-4 w-4" />
+            Share your thoughts
+          </Link>
         </Button>
         <Button onClick={() => setIsOpen(false)}>
           <DollarSign className="mr-2 h-4 w-4" />
