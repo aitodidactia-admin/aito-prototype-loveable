@@ -18,7 +18,7 @@ const Navigation = () => {
 
   const NavContent = () => (
     <>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {menuItems.map((item) => (
           <Link
             key={item.path}
@@ -31,7 +31,7 @@ const Navigation = () => {
           </Link>
         ))}
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Button variant="ghost" asChild onClick={() => setIsOpen(false)}>
           <Link to="/share-thoughts">
             <Share className="mr-2 h-4 w-4" />
@@ -71,7 +71,7 @@ const Navigation = () => {
               )}
             </>
           ) : (
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
               <NavContent />
             </div>
           )}
