@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Home, Info, Share, DollarSign } from "lucide-react";
+import { Menu, X, Home, Info, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -38,9 +38,14 @@ const Navigation = () => {
             Share your thoughts
           </Link>
         </Button>
-        <Button onClick={() => setIsOpen(false)}>
-          <DollarSign className="mr-2 h-4 w-4" />
-          Donate
+        <Button asChild>
+          <a 
+            href="https://www.gofundme.com/f/help-launch-aito?attribution_id=sl:65796281-dd63-478d-82fd-2bd44bf3dae8&utm_campaign=man_ss_icons&utm_medium=customer&utm_source=copy_link" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            Donate
+          </a>
         </Button>
       </div>
     </>
