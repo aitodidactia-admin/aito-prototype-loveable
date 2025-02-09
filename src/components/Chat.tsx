@@ -4,22 +4,15 @@ import { useConversation } from "@11labs/react";
 import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import VoiceSelector from "./VoiceSelector";
 import VolumeControl from "./VolumeControl";
 import { toast } from "sonner";
 
 const Chat = () => {
   const [isListening, setIsListening] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState("9BWtsMINqrJLrRacOk9x");
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
   const conversation = useConversation({
-    overrides: {
-      tts: {
-        voiceId: selectedVoice,
-      },
-    },
     onConnect: () => {
       toast.success("Connected to voice service");
     },
@@ -68,11 +61,6 @@ const Chat = () => {
           <h1 className="text-3xl font-semibold text-center">Voice Assistant</h1>
           
           <div className="flex flex-col items-center space-y-6">
-            <VoiceSelector
-              selectedVoice={selectedVoice}
-              onVoiceChange={setSelectedVoice}
-            />
-            
             <Button
               onClick={handleMicrophoneClick}
               size="lg"
