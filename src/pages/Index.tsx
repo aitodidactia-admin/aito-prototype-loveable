@@ -2,7 +2,11 @@
 import Chat from "@/components/Chat";
 
 const Index = () => {
-  return <Chat />;
+  return (
+    <div className="pt-16">
+      <Chat />
+    </div>
+  );
 };
 
 export default Index;
