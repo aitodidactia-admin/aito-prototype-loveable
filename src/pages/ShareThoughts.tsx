@@ -1,7 +1,20 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const ShareThoughts = () => {
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Message Received",
+      description: "Thank you for your message. We'll get back to you soon!",
+    });
+  };
+
   return (
     <div className="container mx-auto px-4 pt-24 pb-12">
       <Card className="max-w-3xl mx-auto">
@@ -47,6 +60,14 @@ const ShareThoughts = () => {
               </div>
             </div>
           </section>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Textarea 
+              className="min-h-[150px]"
+              placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
+            />
+            <Button type="submit" className="w-full">Send Message</Button>
+          </form>
         </CardContent>
       </Card>
     </div>
