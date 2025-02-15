@@ -31,7 +31,7 @@ const Chat = () => {
       if (!isListening) {
         await navigator.mediaDevices.getUserMedia({ audio: true });
         await conversation.startSession({
-          agentId: "LY8RZr84De8pyrIJbyTj",
+          agentId: "uREm6tctQtdBnhYSh29B",
         });
         setIsListening(true);
       } else {
