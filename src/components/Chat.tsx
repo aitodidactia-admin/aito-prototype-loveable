@@ -31,7 +31,7 @@ const Chat = () => {
       if (!isListening) {
         await navigator.mediaDevices.getUserMedia({ audio: true });
         await conversation.startSession({
-          agentId: "please-replace-with-your-agent-id", // Replace with your actual agent ID
+          agentId: "LY8RZr84De8pyrIJbyTj",
         });
         setIsListening(true);
       } else {
