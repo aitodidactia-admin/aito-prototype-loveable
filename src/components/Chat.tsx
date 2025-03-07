@@ -42,7 +42,7 @@ const Chat = () => {
   }, [isListening, conversation]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-radial from-purple-800 via-purple-600 to-purple-900">
       <Card className="glass p-8 max-w-md w-full space-y-8 animate-fade-up">
         <div className="space-y-6">
           <div className="flex flex-col items-center space-y-6">
