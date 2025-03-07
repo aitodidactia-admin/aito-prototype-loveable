@@ -4,13 +4,10 @@ import { useConversation } from "@11labs/react";
 import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import VolumeControl from "./VolumeControl";
 import { toast } from "sonner";
 
 const Chat = () => {
   const [isListening, setIsListening] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
 
   const conversation = useConversation({
     onConnect: () => {
@@ -44,16 +41,6 @@ const Chat = () => {
     }
   }, [isListening, conversation]);
 
-  const handleVolumeChange = useCallback((newVolume: number) => {
-    setVolume(newVolume);
-    conversation.setVolume({ volume: newVolume });
-  }, [conversation]);
-
-  const handleMuteToggle = useCallback(() => {
-    setIsMuted(!isMuted);
-    conversation.setVolume({ volume: isMuted ? volume : 0 });
-  }, [isMuted, volume, conversation]);
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
       <Card className="glass p-8 max-w-md w-full space-y-8 animate-fade-up">
@@ -74,13 +61,6 @@ const Chat = () => {
                 <MicOff className="h-6 w-6" />
               )}
             </Button>
-
-            <VolumeControl
-              volume={volume}
-              onVolumeChange={handleVolumeChange}
-              isMuted={isMuted}
-              onMuteToggle={handleMuteToggle}
-            />
           </div>
         </div>
       </Card>
