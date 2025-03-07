@@ -63,7 +63,7 @@ const Chat = () => {
               onClick={handleMicrophoneClick}
               size="lg"
               className={`w-16 h-16 rounded-full ${
-                isListening ? "bg-primary hover:bg-primary/90" : ""
+                isListening ? "bg-green-500 hover:bg-green-600" : "bg-gray-200 hover:bg-gray-300"
               }`}
             >
               {isListening ? (
