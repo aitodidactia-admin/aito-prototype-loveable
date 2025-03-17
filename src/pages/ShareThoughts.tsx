@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Send } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -15,8 +17,10 @@ const ShareThoughts = () => {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [testMode, setTestMode] = useState(false);
   
   const EMAIL_TO = "sarahdonoghue1@hotmail.com"; // Email address confirmed
+  const isDevelopment = import.meta.env.DEV;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,21 +37,38 @@ const ShareThoughts = () => {
     setIsLoading(true);
     
     try {
-      // Call Supabase Edge Function to send email
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
+      if (isDevelopment && testMode) {
+        // Simulate successful response in development
+        console.log("DEV MODE: Would send email with:", {
           to: EMAIL_TO,
           message: message,
           from_website: window.location.origin,
-        }
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Message Sent",
-        description: `Your message has been sent to ${EMAIL_TO}. Thank you for reaching out!`,
-      });
+        });
+        
+        // Artificial delay to simulate network request
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast({
+          title: "Test Mode: Message Simulated",
+          description: `In production, this would send an email to ${EMAIL_TO}. Check console for details.`,
+        });
+      } else {
+        // Call Supabase Edge Function to send email
+        const { data, error } = await supabase.functions.invoke('send-email', {
+          body: {
+            to: EMAIL_TO,
+            message: message,
+            from_website: window.location.origin,
+          }
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Message Sent",
+          description: `Your message has been sent to ${EMAIL_TO}. Thank you for reaching out!`,
+        });
+      }
       
       // Clear the form
       setMessage("");
@@ -71,6 +92,32 @@ const ShareThoughts = () => {
           <CardDescription>Connect with us and help shape the future of Aito</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isDevelopment && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Development Mode</AlertTitle>
+              <AlertDescription className="flex flex-col gap-2">
+                <p>You're in development mode. Toggle test mode to simulate email sending without actually sending emails.</p>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant={testMode ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => setTestMode(true)}
+                  >
+                    Test Mode
+                  </Button>
+                  <Button 
+                    variant={!testMode ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => setTestMode(false)}
+                  >
+                    Live Mode
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <section>
             <h2 className="text-2xl font-semibold mb-3">What Can You Do Here?</h2>
             
