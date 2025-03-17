@@ -35,10 +35,10 @@ serve(async (req) => {
     await client.send({
       from: EMAIL_FROM,
       to: to,
-      subject: `New message from ${from_website}`,
+      subject: `New Feedback from Aito user`,
       content: `Message: ${message}`,
       html: `
-        <h2>New message from your website</h2>
+        <h2>New Feedback from Aito user</h2>
         <p><strong>From:</strong> ${from_website}</p>
         <p><strong>Message:</strong></p>
         <p>${message.replace(/\n/g, '<br>')}</p>

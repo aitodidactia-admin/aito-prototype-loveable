@@ -39,7 +39,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
 
   const formatEmailHtml = () => {
     return `
-      <h2>New message from your website</h2>
+      <h2>New Feedback from Aito user</h2>
       <p><strong>From:</strong> ${window.location.origin}</p>
       <p><strong>Message:</strong></p>
       <p>${message.replace(/\n/g, '<br>')}</p>
@@ -53,7 +53,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     console.log("Email Preview:");
     console.log(`To: ${EMAIL_TO}`);
     console.log(`From: sarahdonoghue1@hotmail.com`);
-    console.log(`Subject: New message from ${window.location.origin}`);
+    console.log(`Subject: New Feedback from Aito user`);
     console.log("HTML Content:");
     console.log(formatEmailHtml());
   };
@@ -150,7 +150,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           <div className="space-y-2 text-sm mb-4">
             <div><strong>To:</strong> {EMAIL_TO}</div>
             <div><strong>From:</strong> sarahdonoghue1@hotmail.com</div>
-            <div><strong>Subject:</strong> New message from {window.location.origin}</div>
+            <div><strong>Subject:</strong> New Feedback from Aito user</div>
           </div>
           
           <div className="border rounded-md p-4 bg-white">
