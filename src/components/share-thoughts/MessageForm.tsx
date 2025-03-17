@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Send } from "lucide-react";
 import { supabase, EMAIL_TO } from "./SupabaseConfig";
+import SuccessFeedback from "./SuccessFeedback";
 
 interface MessageFormProps {
   testMode: boolean;
@@ -15,6 +16,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           title: "Test Mode: Message Simulated",
           description: `In production, this would send an email to ${EMAIL_TO}. Check console for details.`,
         });
+        setIsSubmitSuccess(true);
       } else {
         // Call Supabase Edge Function to send email
         console.log("Attempting to invoke Supabase function");
@@ -65,10 +68,8 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           title: "Message Sent",
           description: `Your message has been sent to ${EMAIL_TO}. Thank you for reaching out!`,
         });
+        setIsSubmitSuccess(true);
       }
-      
-      // Clear the form
-      setMessage("");
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
@@ -80,6 +81,15 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       setIsLoading(false);
     }
   };
+
+  const handleReset = () => {
+    setMessage("");
+    setIsSubmitSuccess(false);
+  };
+
+  if (isSubmitSuccess) {
+    return <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
