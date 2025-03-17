@@ -13,15 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    const { to, message, from_website, from_email } = await req.json()
+    const { to, message, from_website } = await req.json()
     
     // Hotmail SMTP settings
     const EMAIL_HOST = Deno.env.get('EMAIL_HOST') || 'smtp-mail.outlook.com'
     const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || 'sarahdonoghue1@hotmail.com'
     const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
-    
-    // Use custom from email if provided, otherwise use the default
-    const EMAIL_FROM = from_email || EMAIL_USERNAME || 'sarahdonoghue1@hotmail.com'
+    const EMAIL_FROM = 'sarahdonoghue1@hotmail.com'
     
     // Create SMTP client
     const client = new SmtpClient()
