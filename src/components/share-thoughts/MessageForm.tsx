@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Eye, ArrowLeft } from "lucide-react";
 import { supabase, EMAIL_TO } from "./SupabaseConfig";
@@ -17,6 +18,7 @@ interface MessageFormProps {
 const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -52,6 +54,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     // Log the email content that would be sent
     console.log("Email Preview:");
     console.log(`To: ${EMAIL_TO}`);
+    console.log(`From: ${fromEmail || 'Default email'}`);
     console.log(`Subject: New message from ${window.location.origin}`);
     console.log("HTML Content:");
     console.log(formatEmailHtml());
@@ -78,6 +81,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           to: EMAIL_TO,
           message: message,
           from_website: window.location.origin,
+          from_email: fromEmail,
         });
         
         // Artificial delay to simulate network request
@@ -96,6 +100,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
             to: EMAIL_TO,
             message: message,
             from_website: window.location.origin,
+            from_email: fromEmail,
           }
         });
         
@@ -123,6 +128,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
 
   const handleReset = () => {
     setMessage("");
+    setFromEmail("");
     setIsSubmitSuccess(false);
     setIsPreviewMode(false);
     setConsoleOutput([]);
@@ -148,6 +154,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           
           <div className="space-y-2 text-sm mb-4">
             <div><strong>To:</strong> {EMAIL_TO}</div>
+            <div><strong>From:</strong> {fromEmail || 'Default email (configured in server)'}</div>
             <div><strong>Subject:</strong> New message from {window.location.origin}</div>
           </div>
           
@@ -181,6 +188,20 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="fromEmail" className="text-sm font-medium">
+          Your Email (optional)
+        </label>
+        <Input
+          id="fromEmail"
+          type="email"
+          placeholder="your@email.com"
+          value={fromEmail}
+          onChange={(e) => setFromEmail(e.target.value)}
+          disabled={isLoading}
+        />
+      </div>
+      
       <Textarea 
         className="min-h-[150px]"
         placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
