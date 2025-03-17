@@ -1,10 +1,14 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Send } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const ShareThoughts = () => {
   const { toast } = useToast();
@@ -28,28 +32,16 @@ const ShareThoughts = () => {
     setIsLoading(true);
     
     try {
-      // Using EmailJS as a frontend email service
-      // In a production app, you should use a backend service for security
-      const formData = new FormData();
-      formData.append("to_email", EMAIL_TO);
-      formData.append("message", message);
-      formData.append("from_website", window.location.origin);
-      
-      // This is a demonstration - in a real app, use a proper email API
-      // Simulating an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real implementation, you would do something like:
-      /*
-      const response = await fetch('https://your-email-api-endpoint', {
-        method: 'POST',
-        body: formData,
+      // Call Supabase Edge Function to send email
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: EMAIL_TO,
+          message: message,
+          from_website: window.location.origin,
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to send email');
-      }
-      */
+      if (error) throw error;
       
       toast({
         title: "Message Sent",
