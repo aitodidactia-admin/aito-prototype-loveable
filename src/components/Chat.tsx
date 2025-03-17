@@ -44,7 +44,7 @@ const Chat = () => {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
       <div className="flex flex-col items-center space-y-6">
-        <div className={`relative ${isListening ? "mic-active" : ""}`}>
+        <div className="relative">
           <Button 
             onClick={handleMicrophoneClick} 
             size="lg" 
