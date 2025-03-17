@@ -14,116 +14,110 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Email configuration
 export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
 
-// Enhanced function to save feedback directly to database in development mode
+// Function to save feedback for development mode without using Edge Functions
 export async function saveFeedbackInDevelopment(message: string, fromWebsite: string) {
   try {
-    console.log("Development mode: Saving feedback directly to database...");
-    const { data, error } = await supabase
-      .from('feedback')
-      .insert({
+    console.log("Development mode: Saving feedback to local storage...");
+    
+    // First create an array to store the feedback if it doesn't exist
+    const existingFeedback = localStorage.getItem('localFeedback');
+    const feedbackArray = existingFeedback ? JSON.parse(existingFeedback) : [];
+    
+    // Add the new feedback
+    const newFeedback = {
+      id: crypto.randomUUID(),
+      message: message,
+      from_website: fromWebsite,
+      created_at: new Date().toISOString()
+    };
+    
+    feedbackArray.push(newFeedback);
+    
+    // Save back to localStorage
+    localStorage.setItem('localFeedback', JSON.stringify(feedbackArray));
+    
+    console.log("Development mode: Feedback saved to localStorage:", newFeedback);
+    return { success: true, data: newFeedback };
+  } catch (err) {
+    console.error("Development mode: Error saving feedback to localStorage:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+// Function to handle feedback submission in development
+export async function handleFeedbackSubmission(message: string, fromWebsite: string, isDevelopment: boolean, testMode: boolean) {
+  // In development and test mode, save to localStorage
+  if (isDevelopment && testMode) {
+    console.log("DEV MODE: Saving feedback to localStorage");
+    return await saveFeedbackInDevelopment(message, fromWebsite);
+  }
+  
+  try {
+    // In production or when dev mode with test mode off, use the Edge Function
+    console.log("Attempting to invoke Supabase function");
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: {
+        to: EMAIL_TO,
         message: message,
         from_website: fromWebsite,
-        created_at: new Date().toISOString()
-      });
+      }
+    });
+    
+    console.log("Supabase function response:", { data, error });
     
     if (error) {
-      console.error("Development mode: Error saving feedback directly:", error);
+      console.error("Function error:", error);
       
-      // If the error is about the table not existing, try to create it directly
-      if (error.message.includes("does not exist") || error.code === "42P01") {
-        console.log("Development mode: Attempting to create feedback table directly...");
-        
-        // Create the table directly using SQL
-        const createTableSQL = `
-          CREATE TABLE IF NOT EXISTS public.feedback (
-            id uuid primary key default gen_random_uuid(),
-            message text not null,
-            from_website text,
-            created_at timestamp with time zone default now()
-          );
-        `;
-        
-        // Try executing the SQL
-        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
-        
-        if (sqlError) {
-          console.error("Development mode: Failed to create table via SQL RPC:", sqlError);
-          return { success: false, error: "Failed to create feedback table" };
-        }
-        
-        // Try inserting again
-        const { error: retryError } = await supabase
-          .from('feedback')
-          .insert({
-            message: message,
-            from_website: fromWebsite,
-            created_at: new Date().toISOString()
-          });
-        
-        if (retryError) {
-          console.error("Development mode: Error on retry save:", retryError);
-          return { success: false, error: retryError.message };
-        }
-        
-        console.log("Development mode: Successfully created table and saved feedback");
-        return { success: true };
+      // In dev mode, fall back to localStorage if the function call fails
+      if (isDevelopment) {
+        console.log("Falling back to localStorage in development mode after function failure");
+        return await saveFeedbackInDevelopment(message, fromWebsite);
       }
       
       return { success: false, error: error.message };
     }
     
-    console.log("Development mode: Feedback saved successfully:", data);
-    return { success: true, data };
+    // Handle the function response
+    return { 
+      success: data?.success || false, 
+      emailSent: data?.emailSent || false,
+      databaseSaved: data?.databaseSaved || false,
+      message: data?.message || "Unknown status"
+    };
   } catch (err) {
-    console.error("Development mode: Unexpected error saving feedback:", err);
+    console.error("Error submitting feedback:", err);
+    
+    // In dev mode, fall back to localStorage if there's any error
+    if (isDevelopment) {
+      console.log("Falling back to localStorage in development mode after error");
+      return await saveFeedbackInDevelopment(message, fromWebsite);
+    }
+    
     return { success: false, error: err.message };
   }
 }
 
-// Function to ensure the feedback table exists
-export async function ensureFeedbackTableExists() {
+// Get stored feedback from localStorage (for dev mode)
+export function getStoredFeedback() {
   try {
-    // Try direct table check first in development
-    if (import.meta.env.DEV) {
-      console.log("Development mode: Checking if feedback table exists directly...");
-      const { data, error } = await supabase
-        .from('feedback')
-        .select('id')
-        .limit(1);
-      
-      if (!error) {
-        console.log("Development mode: Feedback table exists");
-        return true;
-      }
-      
-      // If error indicates table doesn't exist, try to create it
-      if (error.message.includes("does not exist") || error.code === "42P01") {
-        console.log("Development mode: Attempting to create feedback table directly...");
-        
-        // Create the table directly using SQL
-        const createTableSQL = `
-          CREATE TABLE IF NOT EXISTS public.feedback (
-            id uuid primary key default gen_random_uuid(),
-            message text not null,
-            from_website text,
-            created_at timestamp with time zone default now()
-          );
-        `;
-        
-        // Try executing the SQL
-        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
-        
-        if (sqlError) {
-          console.error("Development mode: Failed to create table via SQL RPC:", sqlError);
-          console.log("Falling back to Edge Function approach...");
-        } else {
-          console.log("Development mode: Successfully created feedback table");
-          return true;
-        }
-      }
-    }
-    
-    // Fall back to Edge Function approach if direct method fails or in production
+    const storedFeedback = localStorage.getItem('localFeedback');
+    return storedFeedback ? JSON.parse(storedFeedback) : [];
+  } catch (error) {
+    console.error("Error retrieving stored feedback:", error);
+    return [];
+  }
+}
+
+// For development purposes only - check if feedback table exists
+export async function ensureFeedbackTableExists() {
+  // For development, we'll just simulate this by checking localStorage
+  if (import.meta.env.DEV) {
+    console.log("Development mode: Using localStorage for feedback - no table needed");
+    return true;
+  }
+  
+  // In production, we'll attempt to call the Edge Function
+  try {
     console.log("Ensuring feedback table exists through dedicated endpoint...");
     const { data, error } = await supabase.functions.invoke('create-feedback-table');
     

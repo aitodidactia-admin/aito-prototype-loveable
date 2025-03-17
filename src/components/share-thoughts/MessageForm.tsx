@@ -1,10 +1,17 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, EMAIL_TO, ensureFeedbackTableExists, saveFeedbackInDevelopment } from "./SupabaseConfig";
+import { 
+  EMAIL_TO, 
+  ensureFeedbackTableExists, 
+  handleFeedbackSubmission,
+  getStoredFeedback
+} from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import MessageInputForm from "./MessageInputForm";
 import MessagePreview from "./MessagePreview";
 import { useConsoleLogger } from "./useConsoleLogger";
+import ConsoleLogViewer from "./ConsoleLogViewer";
 
 interface MessageFormProps {
   testMode: boolean;
@@ -24,7 +31,15 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   // Ensure the feedback table exists when the component mounts
   useEffect(() => {
     const checkTable = async () => {
-      console.log("Checking if feedback table exists...");
+      console.log("Checking if feedback storage is ready...");
+      
+      if (isDevelopment) {
+        console.log("Development mode: Using localStorage for feedback storage");
+        setIsTableReady(true);
+        setTableCheckComplete(true);
+        return;
+      }
+      
       const success = await ensureFeedbackTableExists();
       setIsTableReady(success);
       setTableCheckComplete(true);
@@ -38,7 +53,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
         if (isDevelopment) {
           toast({
             title: "Database Setup",
-            description: "The feedback table might not be properly set up. Check console for details.",
+            description: "The feedback table might not be properly set up. Using local storage fallback instead.",
             variant: "destructive",
           });
         }
@@ -84,65 +99,36 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsLoading(true);
     
     try {
-      // In development and test mode, we'll save directly to database
-      if (isDevelopment && testMode) {
-        console.log("DEV MODE: Simulating feedback submission");
+      // Use our centralized function to handle the submission
+      const result = await handleFeedbackSubmission(
+        message,
+        window.location.origin,
+        isDevelopment,
+        testMode
+      );
+      
+      if (result.success) {
+        // Success message varies based on where the feedback was saved
+        let successMessage = "Your feedback has been saved";
         
-        // For development test mode, directly save to database without email
-        const result = await saveFeedbackInDevelopment(message, window.location.origin);
-        
-        if (result.success) {
-          toast({
-            title: "Test Mode: Message Saved",
-            description: `Your message was saved to the database. Check console for details.`,
-          });
-          setIsSubmitSuccess(true);
-        } else {
-          console.error("Test Mode: Error saving feedback:", result.error);
-          toast({
-            title: "Test Mode: Error",
-            description: `Failed to save message: ${result.error}`,
-            variant: "destructive",
-          });
+        if (isDevelopment && testMode) {
+          successMessage += " to local storage. Check browser dev tools for details.";
+        } else if (result.emailSent) {
+          successMessage += ` and an email has been sent to ${EMAIL_TO}`;
+        } else if (result.databaseSaved) {
+          successMessage += " to the database. Email notification is currently disabled.";
         }
-      } else {
-        // Call Supabase Edge Function to send email and save to database
-        console.log("Attempting to invoke Supabase function");
-        const { data, error } = await supabase.functions.invoke('send-email', {
-          body: {
-            to: EMAIL_TO,
-            message: message,
-            from_website: window.location.origin,
-          }
+        
+        toast({
+          title: "Success",
+          description: successMessage,
         });
-        
-        console.log("Supabase function response:", { data, error });
-        
-        if (error) {
-          console.error("Function error:", error);
-          throw error;
-        }
-        
-        // Handle the possible outcomes
-        if (data && data.success) {
-          let successMessage = "Your message has been saved";
-          if (data.emailSent) {
-            successMessage += ` and an email has been sent to ${EMAIL_TO}`;
-          } else {
-            successMessage += " to the database. Email notification is currently disabled.";
-          }
-          
-          toast({
-            title: "Success",
-            description: successMessage,
-          });
-          setIsSubmitSuccess(true);
-        } else {
-          throw new Error("Function executed but did not return success: " + JSON.stringify(data));
-        }
+        setIsSubmitSuccess(true);
+      } else {
+        throw new Error(result.error || "Unknown error occurred");
       }
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error("Error sending feedback:", error);
       toast({
         title: "Error",
         description: isDevelopment
@@ -161,79 +147,32 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsPreviewMode(false);
   };
 
-  // Show database setup warning for developers
-  if (isDevelopment && tableCheckComplete && !isTableReady) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 border-2 border-red-300 bg-red-50 rounded-md">
-          <h3 className="font-semibold text-red-800">Database Setup Required</h3>
-          <p className="text-red-700 mb-2">
-            The feedback table could not be created automatically. This might be due to:
-          </p>
-          <ul className="list-disc pl-5 text-red-700 text-sm">
-            <li>Supabase Edge Function is not deployed</li>
-            <li>Permission issues with the service role key</li>
-            <li>SQL execution errors</li>
-          </ul>
-          <div className="mt-4">
-            <button 
-              onClick={async () => {
-                // Try direct database creation first in development
-                if (isDevelopment) {
-                  console.log("Development mode: Attempting direct SQL table creation...");
-                  
-                  const createTableSQL = `
-                    CREATE TABLE IF NOT EXISTS public.feedback (
-                      id uuid primary key default gen_random_uuid(),
-                      message text not null,
-                      from_website text,
-                      created_at timestamp with time zone default now()
-                    );
-                  `;
-                  
-                  try {
-                    const { error } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
-                    
-                    if (!error) {
-                      toast({
-                        title: "Success",
-                        description: "Feedback table has been created successfully!",
-                      });
-                      setIsTableReady(true);
-                      return;
-                    }
-                    
-                    console.error("Direct SQL creation failed:", error);
-                  } catch (err) {
-                    console.error("Error in direct table creation:", err);
-                  }
-                }
-                
-                // Fall back to Edge Function method
-                const success = await ensureFeedbackTableExists();
-                setIsTableReady(success);
-                if (success) {
-                  toast({
-                    title: "Success",
-                    description: "Feedback table has been created successfully!",
-                  });
-                } else {
-                  toast({
-                    title: "Error",
-                    description: "Still unable to create feedback table. Check console for details.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              Retry Table Creation
-            </button>
-          </div>
+  // Show development mode details
+  if (isDevelopment && testMode) {
+    const storedFeedback = getStoredFeedback();
+    
+    if (isSubmitSuccess) {
+      return (
+        <div className="space-y-4">
+          <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />
+          
+          {storedFeedback.length > 0 && (
+            <div className="mt-6 p-4 border rounded-md bg-gray-50">
+              <h3 className="font-medium text-gray-900 mb-2">Stored Feedback (Development Mode)</h3>
+              <div className="space-y-3">
+                {storedFeedback.map((item: any, index: number) => (
+                  <div key={index} className="p-3 bg-white rounded border">
+                    <p className="text-sm text-gray-500">{new Date(item.created_at).toLocaleString()}</p>
+                    <p className="mt-1">{item.message}</p>
+                    <p className="mt-1 text-sm text-gray-500">From: {item.from_website}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <ConsoleLogViewer consoleOutput={consoleOutput} />
-      </div>
-    );
+      );
+    }
   }
 
   if (isSubmitSuccess) {
@@ -263,22 +202,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       isLoading={isLoading}
       consoleOutput={consoleOutput}
     />
-  );
-};
-
-// Internal component for the console log viewer to avoid circular import
-const ConsoleLogViewer = ({ consoleOutput }: { consoleOutput: string[] }) => {
-  return (
-    <div className="mt-4 p-4 bg-black text-white rounded-md font-mono text-sm overflow-x-auto">
-      <h4 className="text-white/80 mb-2">Console Output:</h4>
-      {consoleOutput.length > 0 ? (
-        consoleOutput.map((log, i) => (
-          <div key={i} className="whitespace-pre-wrap mb-1">{log}</div>
-        ))
-      ) : (
-        <div className="text-gray-400">No console logs yet.</div>
-      )}
-    </div>
   );
 };
 
