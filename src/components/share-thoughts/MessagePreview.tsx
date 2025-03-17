@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 interface MessagePreviewProps {
   emailTo: string;
   message: string;
-  onSend: () => void;
+  onSend: (e: React.FormEvent) => void;  // Updated to match handleSubmit's signature
   onBack: () => void;
   isLoading: boolean;
   formatEmailHtml: () => string;
@@ -47,7 +47,7 @@ const MessagePreview = ({
         </div>
         
         <div className="mt-6 flex gap-3">
-          <Button onClick={onSend} disabled={isLoading}>
+          <Button onClick={(e) => onSend(e)} disabled={isLoading}>
             {isLoading ? 'Sending...' : 'Send Email Now'}
           </Button>
           <Button variant="outline" onClick={onBack}>
