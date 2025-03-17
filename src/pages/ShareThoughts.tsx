@@ -4,14 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Send } from "lucide-react";
+import { Send, Info } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Safely get environment variables with fallbacks
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Only initialize Supabase if we have the required config
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 const ShareThoughts = () => {
   const { toast } = useToast();
@@ -31,6 +35,7 @@ const ShareThoughts = () => {
     // Check if Supabase is configured properly
     console.log("Supabase URL available:", !!supabaseUrl);
     console.log("Supabase Anon Key available:", !!supabaseAnonKey);
+    console.log("Supabase client initialized:", !!supabase);
   }, [isDevelopment, testMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +68,9 @@ const ShareThoughts = () => {
           title: "Test Mode: Message Simulated",
           description: `In production, this would send an email to ${EMAIL_TO}. Check console for details.`,
         });
+      } else if (!supabase) {
+        // Handle missing Supabase configuration
+        throw new Error("Supabase is not properly configured. Check your environment variables.");
       } else {
         // Call Supabase Edge Function to send email
         console.log("Attempting to invoke Supabase function");
@@ -132,6 +140,16 @@ const ShareThoughts = () => {
             </Alert>
           )}
 
+          {!supabaseUrl || !supabaseAnonKey ? (
+            <Alert variant="destructive">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Configuration Missing</AlertTitle>
+              <AlertDescription>
+                <p>Supabase environment variables are missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.</p>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           <section>
             <h2 className="text-2xl font-semibold mb-3">What Can You Do Here?</h2>
             
@@ -176,12 +194,12 @@ const ShareThoughts = () => {
               placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || (!supabaseUrl || !supabaseAnonKey)}
             />
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isLoading}
+              disabled={isLoading || (!supabaseUrl || !supabaseAnonKey)}
             >
               {isLoading ? (
                 <>Sending Message...</>
