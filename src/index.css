@@ -66,6 +66,25 @@
   }
 }
 
+/* New concentric circle animations */
+@keyframes ping-slow {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+@keyframes ping-medium {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 0.3; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+@keyframes ping-fast {
+  0% { transform: scale(0.85); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.85); opacity: 0.5; }
+}
+
 .animate-fade-up {
   animation: fade-up 0.5s ease-out forwards;
 }
@@ -76,6 +95,18 @@
 
 .animate-ripple {
   animation: ripple 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2.5s ease-in-out infinite;
+}
+
+.animate-ping-medium {
+  animation: ping-medium 2.5s ease-in-out 0.2s infinite;
+}
+
+.animate-ping-fast {
+  animation: ping-fast 2.5s ease-in-out 0.4s infinite;
 }
 
 /* Glass effect */
@@ -109,6 +140,11 @@
 .mic-pulse::before {
   content: '';
   @apply absolute inset-0 rounded-full bg-primary/20 animate-ping;
+}
+
+/* Microphone active animations */
+.mic-active {
+  @apply relative;
 }
 
 /* Audio wave animation */

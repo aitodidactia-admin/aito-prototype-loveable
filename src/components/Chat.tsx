@@ -44,26 +44,28 @@ const Chat = () => {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
       <div className="flex flex-col items-center space-y-6">
-        <div className={`relative ${isListening ? 
-          "before:absolute before:inset-0 before:-m-8 before:rounded-full before:bg-green-500/30 before:animate-pulse after:absolute after:inset-0 after:-m-16 after:rounded-full after:bg-green-500/20 after:animate-ping" 
-          : ""}`}>
+        <div className={`relative ${isListening ? "mic-active" : ""}`}>
           <Button 
             onClick={handleMicrophoneClick} 
             size="lg" 
-            className={`w-24 h-24 rounded-full transition-all duration-300 ${
+            className={`w-16 h-16 rounded-full transition-all duration-300 ${
               isListening 
-                ? "bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/50" 
+                ? "bg-green-500 hover:bg-green-600 shadow-md" 
                 : "bg-green-500 hover:bg-green-600 text-white hover:scale-105"
             }`}
           >
             {isListening ? 
-              <div className="relative">
-                <Mic className="h-10 w-10 animate-pulse" />
-                <div className="absolute inset-0 rounded-full bg-white/30 animate-ping"></div>
-              </div> : 
-              <MicOff className="h-10 w-10" />
+              <Mic className="h-6 w-6 animate-pulse" /> : 
+              <MicOff className="h-6 w-6" />
             }
           </Button>
+          {isListening && (
+            <>
+              <div className="absolute inset-0 -m-3 rounded-full bg-purple-500/40 animate-ping-slow"></div>
+              <div className="absolute inset-0 -m-6 rounded-full bg-white/30 animate-ping-medium"></div>
+              <div className="absolute inset-0 -m-9 rounded-full bg-purple-500/20 animate-ping-fast"></div>
+            </>
+          )}
         </div>
       </div>
     </div>
