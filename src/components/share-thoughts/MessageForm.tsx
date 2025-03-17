@@ -5,7 +5,8 @@ import {
   EMAIL_TO, 
   ensureFeedbackTableExists, 
   handleFeedbackSubmission,
-  getStoredFeedback
+  getStoredFeedback,
+  FeedbackResult
 } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import MessageInputForm from "./MessageInputForm";
@@ -100,12 +101,14 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     
     try {
       // Use our centralized function to handle the submission
-      const result = await handleFeedbackSubmission(
+      const result: FeedbackResult = await handleFeedbackSubmission(
         message,
         window.location.origin,
         isDevelopment,
         testMode
       );
+      
+      console.log("Feedback submission result:", result);
       
       if (result.success) {
         // Success message varies based on where the feedback was saved
@@ -113,6 +116,9 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
         
         if (isDevelopment && testMode) {
           successMessage += " to local storage. Check browser dev tools for details.";
+          if (result.databaseSaved) {
+            successMessage = "Your feedback has been saved to the database successfully.";
+          }
         } else if (result.emailSent) {
           successMessage += ` and an email has been sent to ${EMAIL_TO}`;
         } else if (result.databaseSaved) {
