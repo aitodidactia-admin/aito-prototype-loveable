@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ const ShareThoughts = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const EMAIL_TO = "sarahdonoghue1@hotmail.com"; // Email address updated
+  const EMAIL_TO = "sarahdonoghue1@hotmail.com"; // Email address confirmed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

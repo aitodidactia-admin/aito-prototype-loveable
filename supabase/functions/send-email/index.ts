@@ -15,11 +15,11 @@ serve(async (req) => {
   try {
     const { to, message, from_website } = await req.json()
     
-    // Get secrets from environment variables
-    const EMAIL_HOST = Deno.env.get('EMAIL_HOST') || ''
-    const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || ''
+    // Hotmail SMTP settings
+    const EMAIL_HOST = Deno.env.get('EMAIL_HOST') || 'smtp-mail.outlook.com'
+    const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || 'sarahdonoghue1@hotmail.com'
     const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
-    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || ''
+    const EMAIL_FROM = 'sarahdonoghue1@hotmail.com'
     
     // Create SMTP client
     const client = new SmtpClient()
