@@ -3,7 +3,6 @@ import { useState, useCallback } from "react";
 import { useConversation } from "@11labs/react";
 import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Chat = () => {
@@ -44,17 +43,20 @@ const Chat = () => {
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
-      <Card className="glass p-8 max-w-md w-full space-y-8 animate-fade-up bg-transparent">
-        <div className="space-y-6">
-          <div className="flex flex-col items-center space-y-6">
-            <Button onClick={handleMicrophoneClick} size="lg" className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-transparent hover:bg-white/10 text-white border border-white/20"}`}>
-              {isListening ? <div className="mic-pulse">
-                  <Mic className="h-6 w-6" />
-                </div> : <MicOff className="h-6 w-6" />}
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <div className="flex flex-col items-center space-y-6">
+        <Button 
+          onClick={handleMicrophoneClick} 
+          size="lg" 
+          className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-transparent hover:bg-white/10 text-white border border-white/20"}`}
+        >
+          {isListening ? 
+            <div className="mic-pulse">
+              <Mic className="h-6 w-6" />
+            </div> : 
+            <MicOff className="h-6 w-6" />
+          }
+        </Button>
+      </div>
     </div>
   );
 };
