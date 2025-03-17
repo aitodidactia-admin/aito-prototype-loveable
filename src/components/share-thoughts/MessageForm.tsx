@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Eye, ArrowLeft } from "lucide-react";
+import { Send, Eye, ArrowLeft, Save } from "lucide-react";
 import { supabase, EMAIL_TO } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -81,16 +81,18 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           from_website: window.location.origin,
         });
         
+        console.log("DEV MODE: Would save feedback to database");
+        
         // Artificial delay to simulate network request
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         toast({
           title: "Test Mode: Message Simulated",
-          description: `In production, this would send an email to ${EMAIL_TO}. Check console for details.`,
+          description: `In production, this would send an email to ${EMAIL_TO} and save to the database. Check console for details.`,
         });
         setIsSubmitSuccess(true);
       } else {
-        // Call Supabase Edge Function to send email
+        // Call Supabase Edge Function to send email and save to database
         console.log("Attempting to invoke Supabase function");
         const { data, error } = await supabase.functions.invoke('send-email', {
           body: {
@@ -106,7 +108,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
         
         toast({
           title: "Message Sent",
-          description: `Your message has been sent to ${EMAIL_TO}. Thank you for reaching out!`,
+          description: `Your message has been sent to ${EMAIL_TO} and saved. Thank you for reaching out!`,
         });
         setIsSubmitSuccess(true);
       }
@@ -198,10 +200,10 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           disabled={isLoading}
         >
           {isLoading ? (
-            <>Sending Message...</>
+            <>Sending & Saving...</>
           ) : (
             <>
-              <Send className="mr-2 h-4 w-4" /> Send Message
+              <Save className="mr-2 h-4 w-4" /> Send & Save Feedback
             </>
           )}
         </Button>

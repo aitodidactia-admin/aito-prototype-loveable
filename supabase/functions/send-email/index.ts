@@ -5,6 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 serve(async (req) => {
   // This is needed if you're planning to invoke your function from a browser.
@@ -20,6 +21,40 @@ serve(async (req) => {
     const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || 'sarahdonoghue1@hotmail.com'
     const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
     const EMAIL_FROM = 'sarahdonoghue1@hotmail.com'
+    
+    // Initialize Supabase client with environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    // Save the feedback to the database
+    try {
+      // First check if the table exists, create it if it doesn't
+      const { error: tableExistsError } = await supabase.from('feedback').select('id').limit(1)
+      
+      if (tableExistsError) {
+        // Create the feedback table if it doesn't exist
+        const { error: createTableError } = await supabase.rpc('create_feedback_table')
+        
+        if (createTableError) {
+          console.error('Error creating feedback table:', createTableError)
+        }
+      }
+      
+      // Save the feedback entry
+      const { error: insertError } = await supabase.from('feedback').insert({
+        message: message,
+        from_website: from_website,
+        created_at: new Date().toISOString()
+      })
+      
+      if (insertError) {
+        console.error('Error saving feedback to database:', insertError)
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+      // Continue with email sending even if database operation fails
+    }
     
     // Create SMTP client
     const client = new SmtpClient()
