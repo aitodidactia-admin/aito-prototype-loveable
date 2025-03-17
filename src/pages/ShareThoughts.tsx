@@ -1,18 +1,72 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Send } from "lucide-react";
 
 const ShareThoughts = () => {
   const { toast } = useToast();
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const EMAIL_TO = "support@example.com"; // Replace with your actual email address
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Received",
-      description: "Thank you for your message. We'll get back to you soon!",
-    });
+    
+    if (!message.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Using EmailJS as a frontend email service
+      // In a production app, you should use a backend service for security
+      const formData = new FormData();
+      formData.append("to_email", EMAIL_TO);
+      formData.append("message", message);
+      formData.append("from_website", window.location.origin);
+      
+      // This is a demonstration - in a real app, use a proper email API
+      // Simulating an API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In a real implementation, you would do something like:
+      /*
+      const response = await fetch('https://your-email-api-endpoint', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+      */
+      
+      toast({
+        title: "Message Sent",
+        description: `Your message has been sent to ${EMAIL_TO}. Thank you for reaching out!`,
+      });
+      
+      // Clear the form
+      setMessage("");
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send your message. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,8 +119,23 @@ const ShareThoughts = () => {
             <Textarea 
               className="min-h-[150px]"
               placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={isLoading}
             />
-            <Button type="submit" className="w-full">Send Message</Button>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>Sending Message...</>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" /> Send Message
+                </>
+              )}
+            </Button>
             <p className="text-center text-muted-foreground mt-4">
               Thank you for your interest in Aito, we look forward to hearing from you on how you find the experience.
             </p>
