@@ -7,14 +7,12 @@ import { Send, Info } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Updated Supabase URL
+// Supabase configuration
 const supabaseUrl = 'https://bnecasmvbfefzqjjwnys.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIyMjQzOTYsImV4cCI6MjA1NzgwMDM5Nn0.3Kg7Rh_V8BGiTi1Q6ts9c7i2G6Xa23_sph0jmjgpmzE';
 
-// Only initialize Supabase if we have the required config
-const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const ShareThoughts = () => {
   const { toast } = useToast();
@@ -31,9 +29,8 @@ const ShareThoughts = () => {
     console.log("Development mode:", isDevelopment);
     console.log("Test mode:", testMode);
     
-    // Check if Supabase is configured properly
-    console.log("Supabase URL available:", !!supabaseUrl);
-    console.log("Supabase Anon Key available:", !!supabaseAnonKey);
+    // Log Supabase configuration status
+    console.log("Supabase URL:", supabaseUrl);
     console.log("Supabase client initialized:", !!supabase);
   }, [isDevelopment, testMode]);
 
@@ -67,9 +64,6 @@ const ShareThoughts = () => {
           title: "Test Mode: Message Simulated",
           description: `In production, this would send an email to ${EMAIL_TO}. Check console for details.`,
         });
-      } else if (!supabase) {
-        // Handle missing Supabase configuration
-        throw new Error("Supabase is not properly configured. Check your environment variables.");
       } else {
         // Call Supabase Edge Function to send email
         console.log("Attempting to invoke Supabase function");
@@ -139,17 +133,6 @@ const ShareThoughts = () => {
             </Alert>
           )}
 
-          {!supabaseAnonKey ? (
-            <Alert variant="destructive">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Configuration Missing</AlertTitle>
-              <AlertDescription>
-                <p>Supabase anon key is missing. Please set VITE_SUPABASE_ANON_KEY in your .env file or environment variables.</p>
-                <p className="mt-2">Supabase URL is set to: {supabaseUrl}</p>
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
           <section>
             <h2 className="text-2xl font-semibold mb-3">What Can You Do Here?</h2>
             
@@ -194,12 +177,12 @@ const ShareThoughts = () => {
               placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              disabled={isLoading || (!supabaseUrl || !supabaseAnonKey)}
+              disabled={isLoading}
             />
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isLoading || (!supabaseUrl || !supabaseAnonKey)}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>Sending Message...</>
