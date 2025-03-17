@@ -14,9 +14,116 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Email configuration
 export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
 
+// Enhanced function to save feedback directly to database in development mode
+export async function saveFeedbackInDevelopment(message: string, fromWebsite: string) {
+  try {
+    console.log("Development mode: Saving feedback directly to database...");
+    const { data, error } = await supabase
+      .from('feedback')
+      .insert({
+        message: message,
+        from_website: fromWebsite,
+        created_at: new Date().toISOString()
+      });
+    
+    if (error) {
+      console.error("Development mode: Error saving feedback directly:", error);
+      
+      // If the error is about the table not existing, try to create it directly
+      if (error.message.includes("does not exist") || error.code === "42P01") {
+        console.log("Development mode: Attempting to create feedback table directly...");
+        
+        // Create the table directly using SQL
+        const createTableSQL = `
+          CREATE TABLE IF NOT EXISTS public.feedback (
+            id uuid primary key default gen_random_uuid(),
+            message text not null,
+            from_website text,
+            created_at timestamp with time zone default now()
+          );
+        `;
+        
+        // Try executing the SQL
+        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
+        
+        if (sqlError) {
+          console.error("Development mode: Failed to create table via SQL RPC:", sqlError);
+          return { success: false, error: "Failed to create feedback table" };
+        }
+        
+        // Try inserting again
+        const { error: retryError } = await supabase
+          .from('feedback')
+          .insert({
+            message: message,
+            from_website: fromWebsite,
+            created_at: new Date().toISOString()
+          });
+        
+        if (retryError) {
+          console.error("Development mode: Error on retry save:", retryError);
+          return { success: false, error: retryError.message };
+        }
+        
+        console.log("Development mode: Successfully created table and saved feedback");
+        return { success: true };
+      }
+      
+      return { success: false, error: error.message };
+    }
+    
+    console.log("Development mode: Feedback saved successfully:", data);
+    return { success: true, data };
+  } catch (err) {
+    console.error("Development mode: Unexpected error saving feedback:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 // Function to ensure the feedback table exists
 export async function ensureFeedbackTableExists() {
   try {
+    // Try direct table check first in development
+    if (import.meta.env.DEV) {
+      console.log("Development mode: Checking if feedback table exists directly...");
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('id')
+        .limit(1);
+      
+      if (!error) {
+        console.log("Development mode: Feedback table exists");
+        return true;
+      }
+      
+      // If error indicates table doesn't exist, try to create it
+      if (error.message.includes("does not exist") || error.code === "42P01") {
+        console.log("Development mode: Attempting to create feedback table directly...");
+        
+        // Create the table directly using SQL
+        const createTableSQL = `
+          CREATE TABLE IF NOT EXISTS public.feedback (
+            id uuid primary key default gen_random_uuid(),
+            message text not null,
+            from_website text,
+            created_at timestamp with time zone default now()
+          );
+        `;
+        
+        // Try executing the SQL
+        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
+        
+        if (sqlError) {
+          console.error("Development mode: Failed to create table via SQL RPC:", sqlError);
+          console.log("Falling back to Edge Function approach...");
+        } else {
+          console.log("Development mode: Successfully created feedback table");
+          return true;
+        }
+      }
+    }
+    
+    // Fall back to Edge Function approach if direct method fails or in production
     console.log("Ensuring feedback table exists through dedicated endpoint...");
     const { data, error } = await supabase.functions.invoke('create-feedback-table');
     

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, EMAIL_TO, ensureFeedbackTableExists } from "./SupabaseConfig";
+import { supabase, EMAIL_TO, ensureFeedbackTableExists, saveFeedbackInDevelopment } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import MessageInputForm from "./MessageInputForm";
 import MessagePreview from "./MessagePreview";
@@ -85,24 +84,27 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsLoading(true);
     
     try {
+      // In development and test mode, we'll save directly to database
       if (isDevelopment && testMode) {
-        // Simulate successful response in development
-        console.log("DEV MODE: Would send email with:", {
-          to: EMAIL_TO,
-          message: message,
-          from_website: window.location.origin,
-        });
+        console.log("DEV MODE: Simulating feedback submission");
         
-        console.log("DEV MODE: Would save feedback to database");
+        // For development test mode, directly save to database without email
+        const result = await saveFeedbackInDevelopment(message, window.location.origin);
         
-        // Artificial delay to simulate network request
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        toast({
-          title: "Test Mode: Message Simulated",
-          description: `In production, this would send an email to ${EMAIL_TO} and save to the database. Check console for details.`,
-        });
-        setIsSubmitSuccess(true);
+        if (result.success) {
+          toast({
+            title: "Test Mode: Message Saved",
+            description: `Your message was saved to the database. Check console for details.`,
+          });
+          setIsSubmitSuccess(true);
+        } else {
+          console.error("Test Mode: Error saving feedback:", result.error);
+          toast({
+            title: "Test Mode: Error",
+            description: `Failed to save message: ${result.error}`,
+            variant: "destructive",
+          });
+        }
       } else {
         // Call Supabase Edge Function to send email and save to database
         console.log("Attempting to invoke Supabase function");
@@ -143,7 +145,9 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       console.error("Error sending email:", error);
       toast({
         title: "Error",
-        description: "Failed to send your message. Please try again later.",
+        description: isDevelopment
+          ? `Failed to send your message. Error: ${error.message}`
+          : "Failed to send your message. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -173,7 +177,40 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
           </ul>
           <div className="mt-4">
             <button 
-              onClick={() => ensureFeedbackTableExists().then(success => {
+              onClick={async () => {
+                // Try direct database creation first in development
+                if (isDevelopment) {
+                  console.log("Development mode: Attempting direct SQL table creation...");
+                  
+                  const createTableSQL = `
+                    CREATE TABLE IF NOT EXISTS public.feedback (
+                      id uuid primary key default gen_random_uuid(),
+                      message text not null,
+                      from_website text,
+                      created_at timestamp with time zone default now()
+                    );
+                  `;
+                  
+                  try {
+                    const { error } = await supabase.rpc('exec_sql', { sql_query: createTableSQL });
+                    
+                    if (!error) {
+                      toast({
+                        title: "Success",
+                        description: "Feedback table has been created successfully!",
+                      });
+                      setIsTableReady(true);
+                      return;
+                    }
+                    
+                    console.error("Direct SQL creation failed:", error);
+                  } catch (err) {
+                    console.error("Error in direct table creation:", err);
+                  }
+                }
+                
+                // Fall back to Edge Function method
+                const success = await ensureFeedbackTableExists();
                 setIsTableReady(success);
                 if (success) {
                   toast({
@@ -187,7 +224,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
                     variant: "destructive",
                   });
                 }
-              })}
+              }}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
             >
               Retry Table Creation
