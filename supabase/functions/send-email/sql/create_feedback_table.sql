@@ -30,3 +30,6 @@ begin
   end if;
 end;
 $$ language plpgsql security definer;
+
+-- Grant usage to service_role (so it can be called from Edge Functions)
+grant execute on function create_feedback_table() to service_role;

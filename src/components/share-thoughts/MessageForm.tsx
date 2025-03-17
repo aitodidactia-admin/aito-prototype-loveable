@@ -87,13 +87,28 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
         
         console.log("Supabase function response:", { data, error });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Function error:", error);
+          throw error;
+        }
         
-        toast({
-          title: "Message Sent",
-          description: `Your message has been sent to ${EMAIL_TO} and saved. Thank you for reaching out!`,
-        });
-        setIsSubmitSuccess(true);
+        // Handle the possible outcomes
+        if (data && data.success) {
+          let successMessage = "Your message has been saved";
+          if (data.emailSent) {
+            successMessage += ` and an email has been sent to ${EMAIL_TO}`;
+          } else {
+            successMessage += " to the database. Email notification is currently disabled.";
+          }
+          
+          toast({
+            title: "Success",
+            description: successMessage,
+          });
+          setIsSubmitSuccess(true);
+        } else {
+          throw new Error("Function executed but did not return success: " + JSON.stringify(data));
+        }
       }
     } catch (error) {
       console.error("Error sending email:", error);

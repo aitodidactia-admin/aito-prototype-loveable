@@ -29,19 +29,67 @@ serve(async (req) => {
     
     // Save the feedback to the database
     try {
-      // First check if the table exists, create it if it doesn't
-      const { error: tableExistsError } = await supabase.from('feedback').select('id').limit(1)
+      console.log("Checking if feedback table exists...")
       
-      if (tableExistsError) {
-        // Create the feedback table if it doesn't exist
-        const { error: createTableError } = await supabase.rpc('create_feedback_table')
+      // First attempt to directly create the table with SQL
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS public.feedback (
+          id uuid primary key default gen_random_uuid(),
+          message text not null,
+          from_website text,
+          created_at timestamp with time zone default now()
+        );
         
-        if (createTableError) {
-          console.error('Error creating feedback table:', createTableError)
+        -- Set up Row Level Security if table was just created
+        ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+        
+        -- Create policies if they don't exist
+        DO $$
+        BEGIN
+          -- Check if the policy exists before creating it
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'feedback' 
+            AND policyname = 'Allow full access for authenticated users'
+          ) THEN
+            CREATE POLICY "Allow full access for authenticated users" 
+              ON public.feedback FOR ALL 
+              USING (auth.role() = 'authenticated')
+              WITH CHECK (auth.role() = 'authenticated');
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'feedback' 
+            AND policyname = 'Allow anonymous inserts'
+          ) THEN
+            CREATE POLICY "Allow anonymous inserts" 
+              ON public.feedback FOR INSERT 
+              TO anon
+              WITH CHECK (true);
+          END IF;
+        END
+        $$;
+      `;
+      
+      console.log("Executing SQL to create table if it doesn't exist...")
+      const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL })
+      
+      if (sqlError) {
+        console.error('Error executing SQL:', sqlError)
+        
+        // Fallback: try to use the RPC function if direct SQL fails
+        console.log("Attempting to use create_feedback_table RPC function...")
+        const { error: rpcError } = await supabase.rpc('create_feedback_table')
+        
+        if (rpcError) {
+          console.error('Error creating feedback table via RPC:', rpcError)
         }
       }
       
-      // Save the feedback entry
+      // Now try to insert the feedback regardless of whether table creation succeeded
+      // If the table was created successfully, this will work
+      console.log("Attempting to insert feedback...")
       const { error: insertError } = await supabase.from('feedback').insert({
         message: message,
         from_website: from_website,
@@ -50,6 +98,8 @@ serve(async (req) => {
       
       if (insertError) {
         console.error('Error saving feedback to database:', insertError)
+      } else {
+        console.log("Feedback saved successfully to database")
       }
     } catch (dbError) {
       console.error('Database operation failed:', dbError)
@@ -57,33 +107,51 @@ serve(async (req) => {
     }
     
     // Create SMTP client
+    console.log("Attempting to send email...")
     const client = new SmtpClient()
     
-    await client.connectTLS({
-      hostname: EMAIL_HOST,
-      port: 587,
-      username: EMAIL_USERNAME,
-      password: EMAIL_PASSWORD,
-    })
-    
-    // Send email
-    await client.send({
-      from: EMAIL_FROM,
-      to: to,
-      subject: `New Feedback from Aito user`,
-      content: `Message: ${message}`,
-      html: `
-        <h2>New Feedback from Aito user</h2>
-        <p><strong>From:</strong> ${from_website}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-      `,
-    })
-    
-    await client.close()
+    // Only try to send email if password exists
+    let emailSent = false
+    if (EMAIL_PASSWORD && EMAIL_PASSWORD.trim() !== '') {
+      try {
+        await client.connectTLS({
+          hostname: EMAIL_HOST,
+          port: 587,
+          username: EMAIL_USERNAME,
+          password: EMAIL_PASSWORD,
+        })
+        
+        // Send email
+        await client.send({
+          from: EMAIL_FROM,
+          to: to,
+          subject: `New Feedback from Aito user`,
+          content: `Message: ${message}`,
+          html: `
+            <h2>New Feedback from Aito user</h2>
+            <p><strong>From:</strong> ${from_website}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+          `,
+        })
+        
+        await client.close()
+        emailSent = true
+        console.log("Email sent successfully")
+      } catch (emailError) {
+        console.error("Error sending email:", emailError)
+      }
+    } else {
+      console.log("Email password not set, skipping email send")
+    }
     
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true, 
+        databaseSaved: true, 
+        emailSent: emailSent,
+        message: emailSent ? "Message saved and email sent" : "Message saved but email not sent (no password configured)"
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
@@ -91,6 +159,7 @@ serve(async (req) => {
     )
     
   } catch (error) {
+    console.error("Function error:", error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
