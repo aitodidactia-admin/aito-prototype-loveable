@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { useConversation } from "@11labs/react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -42,28 +42,27 @@ const Chat = () => {
   }, [isListening, conversation]);
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
+    <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-purple-600/80 via-purple-500/70 to-indigo-900/90">
       <div className="flex flex-col items-center space-y-6">
         <div className="relative">
           <Button 
             onClick={handleMicrophoneClick} 
-            size="lg" 
-            className={`w-16 h-16 rounded-full transition-all duration-300 ${
-              isListening 
-                ? "bg-green-500 hover:bg-green-600 shadow-md" 
-                : "bg-green-500 hover:bg-green-600 text-white hover:scale-105"
-            }`}
+            size="icon"
+            className={`w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 text-white p-0 flex items-center justify-center transition-all duration-300`}
           >
-            {isListening ? 
-              <Mic className="h-6 w-6 animate-pulse" /> : 
-              <MicOff className="h-6 w-6" />
-            }
+            <Mic className="h-6 w-6" />
           </Button>
+          
           {isListening && (
             <>
-              <div className="absolute inset-0 -m-3 rounded-full bg-purple-500/40 animate-ping-slow"></div>
-              <div className="absolute inset-0 -m-6 rounded-full bg-white/30 animate-ping-medium"></div>
-              <div className="absolute inset-0 -m-9 rounded-full bg-purple-500/20 animate-ping-fast"></div>
+              {/* Outer purple circle */}
+              <div className="absolute inset-0 -m-8 rounded-full border border-purple-400/60 animate-ping-slow"></div>
+              
+              {/* Middle white circle */}
+              <div className="absolute inset-0 -m-5 rounded-full border border-white/60 animate-ping-medium"></div>
+              
+              {/* Inner purple circle */}
+              <div className="absolute inset-0 -m-2 rounded-full border border-purple-400/60 animate-ping-fast"></div>
             </>
           )}
         </div>
