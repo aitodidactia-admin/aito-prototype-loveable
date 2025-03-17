@@ -22,9 +22,9 @@ serve(async (req) => {
     const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
     const EMAIL_FROM = 'sarahdonoghue1@hotmail.com'
     
-    // Initialize Supabase client with environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    // Initialize Supabase client with environment variables or fallback to config values
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://bnecasmvbfefzqjjwnys.supabase.co'
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
     const supabase = createClient(supabaseUrl, supabaseKey)
     
     // Save the feedback to the database
