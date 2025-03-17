@@ -6,7 +6,8 @@ import {
   ensureFeedbackTableExists, 
   handleFeedbackSubmission,
   getStoredFeedback,
-  FeedbackResult
+  FeedbackResult,
+  viewDatabaseFeedback
 } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import MessageInputForm from "./MessageInputForm";
@@ -27,6 +28,9 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isTableReady, setIsTableReady] = useState(false);
   const [tableCheckComplete, setTableCheckComplete] = useState(false);
+  const [storedFeedback, setStoredFeedback] = useState<any[]>([]);
+  const [databaseFeedback, setDatabaseFeedback] = useState<any[]>([]);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const consoleOutput = useConsoleLogger();
 
   // Ensure the feedback table exists when the component mounts
@@ -63,6 +67,30 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     
     checkTable();
   }, [isDevelopment, toast]);
+
+  // Load feedback data on mount and after submission
+  useEffect(() => {
+    const loadFeedback = async () => {
+      setIsLoadingFeedback(true);
+      // Get local storage feedback
+      const localFeedback = getStoredFeedback();
+      setStoredFeedback(localFeedback);
+      
+      // Try to get database feedback as well
+      try {
+        const dbFeedback = await viewDatabaseFeedback();
+        if (dbFeedback.success && dbFeedback.data) {
+          setDatabaseFeedback(dbFeedback.data);
+        }
+      } catch (error) {
+        console.error("Error loading database feedback:", error);
+      }
+      
+      setIsLoadingFeedback(false);
+    };
+    
+    loadFeedback();
+  }, [isSubmitSuccess]);
 
   const formatEmailHtml = () => {
     return `
@@ -153,36 +181,61 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsPreviewMode(false);
   };
 
-  // Show development mode details
-  if (isDevelopment && testMode) {
-    const storedFeedback = getStoredFeedback();
-    
-    if (isSubmitSuccess) {
-      return (
-        <div className="space-y-4">
-          <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />
-          
-          {storedFeedback.length > 0 && (
-            <div className="mt-6 p-4 border rounded-md bg-gray-50">
-              <h3 className="font-medium text-gray-900 mb-2">Stored Feedback (Development Mode)</h3>
-              <div className="space-y-3">
-                {storedFeedback.map((item: any, index: number) => (
-                  <div key={index} className="p-3 bg-white rounded border">
-                    <p className="text-sm text-gray-500">{new Date(item.created_at).toLocaleString()}</p>
-                    <p className="mt-1">{item.message}</p>
-                    <p className="mt-1 text-sm text-gray-500">From: {item.from_website}</p>
-                  </div>
-                ))}
+  // Display feedback viewer
+  const renderFeedbackViewer = () => {
+    return (
+      <div className="mt-6 space-y-4">
+        {isLoadingFeedback ? (
+          <p className="text-center text-muted-foreground">Loading stored feedback...</p>
+        ) : (
+          <>
+            {databaseFeedback.length > 0 && (
+              <div className="p-4 border rounded-md bg-gray-50">
+                <h3 className="font-medium text-gray-900 mb-2">Supabase Database Feedback</h3>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {databaseFeedback.map((item: any, index: number) => (
+                    <div key={`db-${index}`} className="p-3 bg-white rounded border">
+                      <p className="text-sm text-gray-500">{new Date(item.created_at).toLocaleString()}</p>
+                      <p className="mt-1">{item.message}</p>
+                      <p className="mt-1 text-sm text-gray-500">From: {item.from_website}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-  }
+            )}
+            
+            {storedFeedback.length > 0 && (
+              <div className="p-4 border rounded-md bg-gray-50">
+                <h3 className="font-medium text-gray-900 mb-2">Local Storage Feedback</h3>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {storedFeedback.map((item: any, index: number) => (
+                    <div key={`local-${index}`} className="p-3 bg-white rounded border">
+                      <p className="text-sm text-gray-500">{new Date(item.created_at).toLocaleString()}</p>
+                      <p className="mt-1">{item.message}</p>
+                      <p className="mt-1 text-sm text-gray-500">From: {item.from_website}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {storedFeedback.length === 0 && databaseFeedback.length === 0 && (
+              <p className="text-center text-muted-foreground">No feedback has been stored yet.</p>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
+  // Show development mode details or success feedback
   if (isSubmitSuccess) {
-    return <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />;
+    return (
+      <div className="space-y-4">
+        <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />
+        {renderFeedbackViewer()}
+      </div>
+    );
   }
 
   if (isPreviewMode) {
@@ -200,14 +253,18 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   }
 
   return (
-    <MessageInputForm
-      message={message}
-      setMessage={setMessage}
-      onSubmit={handleSubmit}
-      onPreview={handlePreview}
-      isLoading={isLoading}
-      consoleOutput={consoleOutput}
-    />
+    <div className="space-y-6">
+      <MessageInputForm
+        message={message}
+        setMessage={setMessage}
+        onSubmit={handleSubmit}
+        onPreview={handlePreview}
+        isLoading={isLoading}
+        consoleOutput={consoleOutput}
+      />
+      
+      {renderFeedbackViewer()}
+    </div>
   );
 };
 

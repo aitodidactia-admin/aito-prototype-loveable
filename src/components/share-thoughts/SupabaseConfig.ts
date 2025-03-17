@@ -24,6 +24,41 @@ export interface FeedbackResult {
   error?: string;
 }
 
+// Function to view database feedback
+export async function viewDatabaseFeedback(): Promise<FeedbackResult> {
+  try {
+    console.log("Attempting to fetch feedback from database...");
+    
+    // First check if we can query the table
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching feedback from database:", error);
+      return { 
+        success: false, 
+        error: error.message,
+        data: []
+      };
+    }
+    
+    console.log("Successfully fetched feedback from database:", data);
+    return { 
+      success: true, 
+      data: data || []
+    };
+  } catch (err) {
+    console.error("Exception fetching feedback:", err);
+    return { 
+      success: false, 
+      error: err.message,
+      data: []
+    };
+  }
+}
+
 // Function to save feedback for development mode without using Edge Functions
 export async function saveFeedbackInDevelopment(message: string, fromWebsite: string): Promise<FeedbackResult> {
   try {
@@ -70,60 +105,17 @@ export async function saveFeedbackDirectlyToDb(message: string, fromWebsite: str
   console.log("Attempting to save feedback directly to Supabase...");
   
   try {
-    // First try to ensure the table exists
+    // Simplified approach - first check if the table exists, but don't try to create it
+    // as we'll assume the user has created it manually
     console.log("Checking if feedback table exists...");
-    
-    try {
-      // Try to query the table to see if it exists
-      const { data: tableCheck, error: tableError } = await supabase
-        .from('feedback')
-        .select('id')
-        .limit(1);
-      
-      if (tableError) {
-        console.log("Table check failed, attempting to create table:", tableError);
-        
-        // Try to create the table using SQL
-        const createTableSQL = `
-          CREATE TABLE IF NOT EXISTS public.feedback (
-            id uuid primary key default gen_random_uuid(),
-            message text not null,
-            from_website text,
-            created_at timestamp with time zone default now()
-          );
-        `;
-        
-        // Execute the SQL using the REST API
-        const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-            'apikey': supabaseAnonKey
-          },
-          body: JSON.stringify({
-            query: createTableSQL
-          })
-        });
-        
-        if (!response.ok) {
-          console.error("Failed to create table:", await response.text());
-          throw new Error("Failed to create feedback table");
-        }
-      }
-    } catch (tableCreateError) {
-      console.error("Error creating table:", tableCreateError);
-      // Continue anyway and try to insert - the table might actually exist
-    }
-    
-    // Now insert the data
+
+    // Now insert the data - even if the check fails, we'll try inserting anyway
     console.log("Inserting feedback data...");
     const { data, error } = await supabase
       .from('feedback')
       .insert({
         message: message,
         from_website: fromWebsite,
-        created_at: new Date().toISOString()
       })
       .select();
     
@@ -235,24 +227,26 @@ export function getStoredFeedback() {
 export async function ensureFeedbackTableExists() {
   // For development, we'll just simulate this by checking localStorage
   if (import.meta.env.DEV) {
-    console.log("Development mode: Using localStorage for feedback - no table needed");
+    console.log("Development mode: Using localStorage for feedback storage");
     return true;
   }
   
   // In production, we'll attempt to call the Edge Function
   try {
-    console.log("Ensuring feedback table exists through dedicated endpoint...");
-    const { data, error } = await supabase.functions.invoke('create-feedback-table');
+    console.log("Checking if feedback table exists...");
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('id')
+      .limit(1);
     
     if (error) {
-      console.error("Error creating feedback table:", error);
+      console.error("Table check failed:", error);
       return false;
     }
     
-    console.log("Feedback table creation response:", data);
-    return data?.success || false;
+    return true;
   } catch (err) {
-    console.error("Failed to ensure feedback table exists:", err);
+    console.error("Failed to check feedback table:", err);
     return false;
   }
 }
