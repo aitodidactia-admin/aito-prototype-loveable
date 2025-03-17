@@ -27,69 +27,73 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Save the feedback to the database
+    // Ensure the feedback table exists
+    // First try to call the create_feedback_table() function
+    console.log("Ensuring feedback table exists...")
     try {
-      console.log("Checking if feedback table exists...")
+      const { error: rpcError } = await supabase.rpc('create_feedback_table')
       
-      // First attempt to directly create the table with SQL
-      const createTableSQL = `
-        CREATE TABLE IF NOT EXISTS public.feedback (
-          id uuid primary key default gen_random_uuid(),
-          message text not null,
-          from_website text,
-          created_at timestamp with time zone default now()
-        );
+      if (rpcError) {
+        console.error('Error creating feedback table via RPC:', rpcError)
         
-        -- Set up Row Level Security if table was just created
-        ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
-        
-        -- Create policies if they don't exist
-        DO $$
-        BEGIN
-          -- Check if the policy exists before creating it
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_policies 
-            WHERE tablename = 'feedback' 
-            AND policyname = 'Allow full access for authenticated users'
-          ) THEN
-            CREATE POLICY "Allow full access for authenticated users" 
-              ON public.feedback FOR ALL 
-              USING (auth.role() = 'authenticated')
-              WITH CHECK (auth.role() = 'authenticated');
-          END IF;
+        // Fallback: try to use direct SQL if RPC fails
+        console.log("Attempting to use direct SQL to create table...")
+        const createTableSQL = `
+          CREATE TABLE IF NOT EXISTS public.feedback (
+            id uuid primary key default gen_random_uuid(),
+            message text not null,
+            from_website text,
+            created_at timestamp with time zone default now()
+          );
           
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_policies 
-            WHERE tablename = 'feedback' 
-            AND policyname = 'Allow anonymous inserts'
-          ) THEN
-            CREATE POLICY "Allow anonymous inserts" 
-              ON public.feedback FOR INSERT 
-              TO anon
-              WITH CHECK (true);
-          END IF;
-        END
-        $$;
-      `;
-      
-      console.log("Executing SQL to create table if it doesn't exist...")
-      const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL })
-      
-      if (sqlError) {
-        console.error('Error executing SQL:', sqlError)
+          -- Set up Row Level Security if table was just created
+          ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+          
+          -- Create policies if they don't exist
+          DO $$
+          BEGIN
+            -- Check if the policy exists before creating it
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_policies 
+              WHERE tablename = 'feedback' 
+              AND policyname = 'Allow full access for authenticated users'
+            ) THEN
+              CREATE POLICY "Allow full access for authenticated users" 
+                ON public.feedback FOR ALL 
+                USING (auth.role() = 'authenticated')
+                WITH CHECK (auth.role() = 'authenticated');
+            END IF;
+            
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_policies 
+              WHERE tablename = 'feedback' 
+              AND policyname = 'Allow anonymous inserts'
+            ) THEN
+              CREATE POLICY "Allow anonymous inserts" 
+                ON public.feedback FOR INSERT 
+                TO anon
+                WITH CHECK (true);
+            END IF;
+          END
+          $$;
+        `;
         
-        // Fallback: try to use the RPC function if direct SQL fails
-        console.log("Attempting to use create_feedback_table RPC function...")
-        const { error: rpcError } = await supabase.rpc('create_feedback_table')
+        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL })
         
-        if (rpcError) {
-          console.error('Error creating feedback table via RPC:', rpcError)
+        if (sqlError) {
+          console.error('Error executing SQL:', sqlError)
         }
+      } else {
+        console.log("Feedback table exists or was created successfully via RPC function")
       }
-      
-      // Now try to insert the feedback regardless of whether table creation succeeded
-      // If the table was created successfully, this will work
-      console.log("Attempting to insert feedback...")
+    } catch (tableError) {
+      console.error('Error ensuring feedback table exists:', tableError)
+    }
+    
+    // Save the feedback to the database
+    console.log("Attempting to insert feedback...")
+    let databaseSaved = false
+    try {
       const { error: insertError } = await supabase.from('feedback').insert({
         message: message,
         from_website: from_website,
@@ -100,10 +104,10 @@ serve(async (req) => {
         console.error('Error saving feedback to database:', insertError)
       } else {
         console.log("Feedback saved successfully to database")
+        databaseSaved = true
       }
     } catch (dbError) {
       console.error('Database operation failed:', dbError)
-      // Continue with email sending even if database operation fails
     }
     
     // Create SMTP client
@@ -147,14 +151,18 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        databaseSaved: true, 
+        success: databaseSaved, 
+        databaseSaved: databaseSaved, 
         emailSent: emailSent,
-        message: emailSent ? "Message saved and email sent" : "Message saved but email not sent (no password configured)"
+        message: emailSent 
+          ? "Message saved and email sent" 
+          : (databaseSaved 
+              ? "Message saved but email not sent (no password configured)" 
+              : "Failed to save message")
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: databaseSaved ? 200 : 500
       },
     )
     
