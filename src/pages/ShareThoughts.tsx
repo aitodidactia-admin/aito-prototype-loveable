@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,8 +7,8 @@ import { Send, Info } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Safely get environment variables with fallbacks
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+// Updated Supabase URL
+const supabaseUrl = 'https://bnecasmvbfefzqjjwnys.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Only initialize Supabase if we have the required config
@@ -140,12 +139,13 @@ const ShareThoughts = () => {
             </Alert>
           )}
 
-          {!supabaseUrl || !supabaseAnonKey ? (
+          {!supabaseAnonKey ? (
             <Alert variant="destructive">
               <Info className="h-4 w-4" />
               <AlertTitle>Configuration Missing</AlertTitle>
               <AlertDescription>
-                <p>Supabase environment variables are missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.</p>
+                <p>Supabase anon key is missing. Please set VITE_SUPABASE_ANON_KEY in your .env file or environment variables.</p>
+                <p className="mt-2">Supabase URL is set to: {supabaseUrl}</p>
               </AlertDescription>
             </Alert>
           ) : null}
