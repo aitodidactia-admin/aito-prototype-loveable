@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { useConversation } from "@11labs/react";
-import { Mic } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -48,9 +48,9 @@ const Chat = () => {
           <Button 
             onClick={handleMicrophoneClick} 
             size="icon"
-            className={`w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 text-white p-0 flex items-center justify-center transition-all duration-300`}
+            className={`w-16 h-16 rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white p-0 flex items-center justify-center transition-all duration-300`}
           >
-            <Mic className="h-6 w-6" />
+            {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </Button>
           
           {isListening && (
