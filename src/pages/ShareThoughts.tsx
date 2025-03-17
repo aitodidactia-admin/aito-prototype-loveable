@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,17 @@ const ShareThoughts = () => {
   
   const EMAIL_TO = "sarahdonoghue1@hotmail.com"; // Email address confirmed
   const isDevelopment = import.meta.env.DEV;
+
+  // Add debug logging
+  useEffect(() => {
+    console.log("ShareThoughts component mounted");
+    console.log("Development mode:", isDevelopment);
+    console.log("Test mode:", testMode);
+    
+    // Check if Supabase is configured properly
+    console.log("Supabase URL available:", !!supabaseUrl);
+    console.log("Supabase Anon Key available:", !!supabaseAnonKey);
+  }, [isDevelopment, testMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +65,7 @@ const ShareThoughts = () => {
         });
       } else {
         // Call Supabase Edge Function to send email
+        console.log("Attempting to invoke Supabase function");
         const { data, error } = await supabase.functions.invoke('send-email', {
           body: {
             to: EMAIL_TO,
@@ -61,6 +73,8 @@ const ShareThoughts = () => {
             from_website: window.location.origin,
           }
         });
+        
+        console.log("Supabase function response:", { data, error });
         
         if (error) throw error;
         
