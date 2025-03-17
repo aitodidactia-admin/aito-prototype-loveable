@@ -1,13 +1,11 @@
 
 import React, { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Eye, ArrowLeft, Save } from "lucide-react";
 import { supabase, EMAIL_TO } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
+import MessageInputForm from "./MessageInputForm";
+import MessagePreview from "./MessagePreview";
+import { useConsoleLogger } from "./useConsoleLogger";
 
 interface MessageFormProps {
   testMode: boolean;
@@ -20,22 +18,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
-
-  // Override console.log to capture output
-  React.useEffect(() => {
-    const originalConsoleLog = console.log;
-    console.log = (...args) => {
-      originalConsoleLog(...args);
-      setConsoleOutput(prev => [...prev, args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ')]);
-    };
-    
-    return () => {
-      console.log = originalConsoleLog;
-    };
-  }, []);
+  const consoleOutput = useConsoleLogger();
 
   const formatEmailHtml = () => {
     return `
@@ -128,7 +111,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setMessage("");
     setIsSubmitSuccess(false);
     setIsPreviewMode(false);
-    setConsoleOutput([]);
   };
 
   if (isSubmitSuccess) {
@@ -137,114 +119,27 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
 
   if (isPreviewMode) {
     return (
-      <div className="space-y-4">
-        <Button 
-          variant="outline" 
-          onClick={() => setIsPreviewMode(false)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Editor
-        </Button>
-        
-        <Card className="p-6 border-2 border-primary/20">
-          <h3 className="text-xl font-semibold mb-4">Email Preview</h3>
-          
-          <div className="space-y-2 text-sm mb-4">
-            <div><strong>To:</strong> {EMAIL_TO}</div>
-            <div><strong>From:</strong> sarahdonoghue1@hotmail.com</div>
-            <div><strong>Subject:</strong> New Feedback from Aito user</div>
-          </div>
-          
-          <div className="border rounded-md p-4 bg-white">
-            <div dangerouslySetInnerHTML={{ __html: formatEmailHtml() }} />
-          </div>
-          
-          <div className="mt-6 flex gap-3">
-            <Button onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? 'Sending...' : 'Send Email Now'}
-            </Button>
-            <Button variant="outline" onClick={() => setIsPreviewMode(false)}>
-              Edit Message
-            </Button>
-          </div>
-        </Card>
-        
-        {consoleOutput.length > 0 && (
-          <Card className="p-4 border bg-black text-white font-mono text-sm">
-            <h4 className="text-lg mb-2 text-white/80">Console Output</h4>
-            <div className="overflow-x-auto">
-              {consoleOutput.map((log, i) => (
-                <div key={i} className="whitespace-pre-wrap mb-1">{log}</div>
-              ))}
-            </div>
-          </Card>
-        )}
-      </div>
+      <MessagePreview
+        emailTo={EMAIL_TO}
+        message={message}
+        onSend={handleSubmit}
+        onBack={() => setIsPreviewMode(false)}
+        isLoading={isLoading}
+        formatEmailHtml={formatEmailHtml}
+        consoleOutput={consoleOutput}
+      />
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Textarea 
-        className="min-h-[150px]"
-        placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        disabled={isLoading}
-      />
-      
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button 
-          type="submit" 
-          className="flex-1" 
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>Sending & Saving...</>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" /> Send & Save Feedback
-            </>
-          )}
-        </Button>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePreview}
-          disabled={!message.trim() || isLoading}
-          className="flex-1 sm:flex-initial"
-        >
-          <Eye className="mr-2 h-4 w-4" /> Preview Email
-        </Button>
-      </div>
-      
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="link" type="button" className="w-full">
-            View Console Logs
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Console Logs</DialogTitle>
-          </DialogHeader>
-          <div className="bg-black text-white p-4 rounded-md font-mono text-sm overflow-x-auto">
-            {consoleOutput.length > 0 ? (
-              consoleOutput.map((log, i) => (
-                <div key={i} className="whitespace-pre-wrap mb-1">{log}</div>
-              ))
-            ) : (
-              <div className="text-gray-400">No console logs yet. Try previewing or sending a message.</div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-      
-      <p className="text-center text-muted-foreground mt-4">
-        Thank you for your interest in Aito, we look forward to hearing from you on how you find the experience.
-      </p>
-    </form>
+    <MessageInputForm
+      message={message}
+      setMessage={setMessage}
+      onSubmit={handleSubmit}
+      onPreview={handlePreview}
+      isLoading={isLoading}
+      consoleOutput={consoleOutput}
+    />
   );
 };
 
