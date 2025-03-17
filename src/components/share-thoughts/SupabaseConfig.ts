@@ -13,3 +13,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Email configuration
 export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
+
+// Function to ensure the feedback table exists
+export async function ensureFeedbackTableExists() {
+  try {
+    console.log("Ensuring feedback table exists through dedicated endpoint...");
+    const { data, error } = await supabase.functions.invoke('create-feedback-table');
+    
+    if (error) {
+      console.error("Error creating feedback table:", error);
+      return false;
+    }
+    
+    console.log("Feedback table creation response:", data);
+    return data?.success || false;
+  } catch (err) {
+    console.error("Failed to ensure feedback table exists:", err);
+    return false;
+  }
+}

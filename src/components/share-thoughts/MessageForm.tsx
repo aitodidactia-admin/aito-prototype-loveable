@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, EMAIL_TO } from "./SupabaseConfig";
+import { supabase, EMAIL_TO, ensureFeedbackTableExists } from "./SupabaseConfig";
 import SuccessFeedback from "./SuccessFeedback";
 import MessageInputForm from "./MessageInputForm";
 import MessagePreview from "./MessagePreview";
@@ -18,7 +18,36 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isTableReady, setIsTableReady] = useState(false);
+  const [tableCheckComplete, setTableCheckComplete] = useState(false);
   const consoleOutput = useConsoleLogger();
+
+  // Ensure the feedback table exists when the component mounts
+  useEffect(() => {
+    const checkTable = async () => {
+      console.log("Checking if feedback table exists...");
+      const success = await ensureFeedbackTableExists();
+      setIsTableReady(success);
+      setTableCheckComplete(true);
+      
+      if (success) {
+        console.log("Feedback table is ready for use");
+      } else {
+        console.warn("Warning: Feedback table may not be properly set up");
+        
+        // Only show toast in development mode to avoid alarming end users
+        if (isDevelopment) {
+          toast({
+            title: "Database Setup",
+            description: "The feedback table might not be properly set up. Check console for details.",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    
+    checkTable();
+  }, [isDevelopment, toast]);
 
   const formatEmailHtml = () => {
     return `
@@ -128,6 +157,48 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsPreviewMode(false);
   };
 
+  // Show database setup warning for developers
+  if (isDevelopment && tableCheckComplete && !isTableReady) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 border-2 border-red-300 bg-red-50 rounded-md">
+          <h3 className="font-semibold text-red-800">Database Setup Required</h3>
+          <p className="text-red-700 mb-2">
+            The feedback table could not be created automatically. This might be due to:
+          </p>
+          <ul className="list-disc pl-5 text-red-700 text-sm">
+            <li>Supabase Edge Function is not deployed</li>
+            <li>Permission issues with the service role key</li>
+            <li>SQL execution errors</li>
+          </ul>
+          <div className="mt-4">
+            <button 
+              onClick={() => ensureFeedbackTableExists().then(success => {
+                setIsTableReady(success);
+                if (success) {
+                  toast({
+                    title: "Success",
+                    description: "Feedback table has been created successfully!",
+                  });
+                } else {
+                  toast({
+                    title: "Error",
+                    description: "Still unable to create feedback table. Check console for details.",
+                    variant: "destructive",
+                  });
+                }
+              })}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Retry Table Creation
+            </button>
+          </div>
+        </div>
+        <ConsoleLogViewer consoleOutput={consoleOutput} />
+      </div>
+    );
+  }
+
   if (isSubmitSuccess) {
     return <SuccessFeedback recipient={EMAIL_TO} onReset={handleReset} />;
   }
@@ -155,6 +226,22 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       isLoading={isLoading}
       consoleOutput={consoleOutput}
     />
+  );
+};
+
+// Internal component for the console log viewer to avoid circular import
+const ConsoleLogViewer = ({ consoleOutput }: { consoleOutput: string[] }) => {
+  return (
+    <div className="mt-4 p-4 bg-black text-white rounded-md font-mono text-sm overflow-x-auto">
+      <h4 className="text-white/80 mb-2">Console Output:</h4>
+      {consoleOutput.length > 0 ? (
+        consoleOutput.map((log, i) => (
+          <div key={i} className="whitespace-pre-wrap mb-1">{log}</div>
+        ))
+      ) : (
+        <div className="text-gray-400">No console logs yet.</div>
+      )}
+    </div>
   );
 };
 

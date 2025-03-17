@@ -7,6 +7,99 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
+// This function will ensure our feedback table exists
+async function ensureFeedbackTableExists(supabase: any) {
+  console.log("Ensuring feedback table exists on initialization...")
+  try {
+    // First, try to call the create_feedback_table() function
+    const { error: rpcError } = await supabase.rpc('create_feedback_table')
+    
+    if (rpcError) {
+      console.error('Error creating feedback table via RPC:', rpcError)
+      
+      // Fallback: try to use direct SQL if RPC fails
+      console.log("Attempting to use direct SQL to create table...")
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS public.feedback (
+          id uuid primary key default gen_random_uuid(),
+          message text not null,
+          from_website text,
+          created_at timestamp with time zone default now()
+        );
+        
+        -- Set up Row Level Security if table was just created
+        ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+        
+        -- Create policies if they don't exist
+        DO $$
+        BEGIN
+          -- Check if the policy exists before creating it
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'feedback' 
+            AND policyname = 'Allow full access for authenticated users'
+          ) THEN
+            CREATE POLICY "Allow full access for authenticated users" 
+              ON public.feedback FOR ALL 
+              USING (auth.role() = 'authenticated')
+              WITH CHECK (auth.role() = 'authenticated');
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'feedback' 
+            AND policyname = 'Allow anonymous inserts'
+          ) THEN
+            CREATE POLICY "Allow anonymous inserts" 
+              ON public.feedback FOR INSERT 
+              TO anon
+              WITH CHECK (true);
+          END IF;
+        END
+        $$;
+      `;
+      
+      const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL })
+      
+      if (sqlError) {
+        console.error('Error executing SQL:', sqlError)
+        return false
+      }
+    } else {
+      console.log("Feedback table exists or was created successfully via RPC function")
+    }
+    
+    // Now let's check if the table exists by trying to query it
+    const { data, error: checkError } = await supabase
+      .from('feedback')
+      .select('id')
+      .limit(1)
+    
+    if (checkError) {
+      console.error('Table existence check failed:', checkError)
+      return false
+    }
+    
+    console.log("Feedback table verified to exist:", !!data)
+    return true
+  } catch (tableError) {
+    console.error('Error ensuring feedback table exists:', tableError)
+    return false
+  }
+}
+
+// Initialize the Supabase client for the initialization
+const initSupabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://bnecasmvbfefzqjjwnys.supabase.co'
+const initSupabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
+const initSupabase = createClient(initSupabaseUrl, initSupabaseKey)
+
+// Proactively create the table when the Edge Function is deployed or restarted
+ensureFeedbackTableExists(initSupabase).then(success => {
+  console.log("Table initialization complete. Success:", success)
+}).catch(err => {
+  console.error("Table initialization failed:", err)
+})
+
 serve(async (req) => {
   // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
@@ -27,68 +120,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Ensure the feedback table exists
-    // First try to call the create_feedback_table() function
-    console.log("Ensuring feedback table exists...")
-    try {
-      const { error: rpcError } = await supabase.rpc('create_feedback_table')
-      
-      if (rpcError) {
-        console.error('Error creating feedback table via RPC:', rpcError)
-        
-        // Fallback: try to use direct SQL if RPC fails
-        console.log("Attempting to use direct SQL to create table...")
-        const createTableSQL = `
-          CREATE TABLE IF NOT EXISTS public.feedback (
-            id uuid primary key default gen_random_uuid(),
-            message text not null,
-            from_website text,
-            created_at timestamp with time zone default now()
-          );
-          
-          -- Set up Row Level Security if table was just created
-          ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
-          
-          -- Create policies if they don't exist
-          DO $$
-          BEGIN
-            -- Check if the policy exists before creating it
-            IF NOT EXISTS (
-              SELECT 1 FROM pg_policies 
-              WHERE tablename = 'feedback' 
-              AND policyname = 'Allow full access for authenticated users'
-            ) THEN
-              CREATE POLICY "Allow full access for authenticated users" 
-                ON public.feedback FOR ALL 
-                USING (auth.role() = 'authenticated')
-                WITH CHECK (auth.role() = 'authenticated');
-            END IF;
-            
-            IF NOT EXISTS (
-              SELECT 1 FROM pg_policies 
-              WHERE tablename = 'feedback' 
-              AND policyname = 'Allow anonymous inserts'
-            ) THEN
-              CREATE POLICY "Allow anonymous inserts" 
-                ON public.feedback FOR INSERT 
-                TO anon
-                WITH CHECK (true);
-            END IF;
-          END
-          $$;
-        `;
-        
-        const { error: sqlError } = await supabase.rpc('exec_sql', { sql_query: createTableSQL })
-        
-        if (sqlError) {
-          console.error('Error executing SQL:', sqlError)
-        }
-      } else {
-        console.log("Feedback table exists or was created successfully via RPC function")
-      }
-    } catch (tableError) {
-      console.error('Error ensuring feedback table exists:', tableError)
-    }
+    // Ensure the feedback table exists (as a backup to the initialization)
+    await ensureFeedbackTableExists(supabase)
     
     // Save the feedback to the database
     console.log("Attempting to insert feedback...")
