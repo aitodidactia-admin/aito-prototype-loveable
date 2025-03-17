@@ -1,9 +1,11 @@
+
 import { useState, useCallback } from "react";
 import { useConversation } from "@11labs/react";
 import { Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+
 const Chat = () => {
   const [isListening, setIsListening] = useState(false);
   const conversation = useConversation({
@@ -19,6 +21,7 @@ const Chat = () => {
       setIsListening(false);
     }
   });
+
   const handleMicrophoneClick = useCallback(async () => {
     try {
       if (!isListening) {
@@ -38,7 +41,9 @@ const Chat = () => {
       console.error(error);
     }
   }, [isListening, conversation]);
-  return <div className="min-h-screen flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
+
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
       <Card className="glass p-8 max-w-md w-full space-y-8 animate-fade-up bg-transparent">
         <div className="space-y-6">
           <div className="flex flex-col items-center space-y-6">
@@ -50,6 +55,8 @@ const Chat = () => {
           </div>
         </div>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default Chat;
