@@ -48,13 +48,13 @@ const Chat = () => {
           <Button 
             onClick={handleMicrophoneClick} 
             size="icon"
-            className={`w-16 h-16 rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white p-0 flex items-center justify-center transition-all duration-300`}
+            className={`w-16 h-16 rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white p-0 flex items-center justify-center transition-all duration-300 z-10 relative`}
           >
             {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </Button>
           
           {isListening && (
-            <>
+            <div className="absolute inset-0 pointer-events-none">
               {/* Outer purple circle */}
               <div className="absolute inset-0 -m-8 rounded-full border border-purple-400/60 animate-ping-slow"></div>
               
@@ -63,7 +63,7 @@ const Chat = () => {
               
               {/* Inner purple circle */}
               <div className="absolute inset-0 -m-2 rounded-full border border-purple-400/60 animate-ping-fast"></div>
-            </>
+            </div>
           )}
         </div>
       </div>
