@@ -44,18 +44,20 @@ const Chat = () => {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-radial from-[#7a6fbf] via-[#655ca0] to-[#4b4678]">
       <div className="flex flex-col items-center space-y-6">
-        <Button 
-          onClick={handleMicrophoneClick} 
-          size="lg" 
-          className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-green-500 hover:bg-green-600 text-white"}`}
-        >
-          {isListening ? 
-            <div className="mic-pulse">
-              <Mic className="h-6 w-6" />
-            </div> : 
-            <MicOff className="h-6 w-6" />
-          }
-        </Button>
+        <div className={`relative ${isListening ? "before:absolute before:inset-0 before:-m-3 before:rounded-full before:bg-green-500/30 before:animate-pulse" : ""}`}>
+          <Button 
+            onClick={handleMicrophoneClick} 
+            size="lg" 
+            className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-green-500 hover:bg-green-600 text-white"}`}
+          >
+            {isListening ? 
+              <div className="mic-pulse">
+                <Mic className="h-6 w-6" />
+              </div> : 
+              <MicOff className="h-6 w-6" />
+            }
+          </Button>
+        </div>
       </div>
     </div>
   );
