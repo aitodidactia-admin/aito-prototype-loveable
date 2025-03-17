@@ -47,7 +47,7 @@ const Chat = () => {
         <Button 
           onClick={handleMicrophoneClick} 
           size="lg" 
-          className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-transparent hover:bg-white/10 text-white border border-white/20"}`}
+          className={`w-16 h-16 rounded-full ${isListening ? "bg-green-500 hover:bg-green-600" : "bg-green-500 hover:bg-green-600 text-white"}`}
         >
           {isListening ? 
             <div className="mic-pulse">
