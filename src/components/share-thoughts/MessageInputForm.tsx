@@ -42,7 +42,7 @@ const MessageInputForm = ({
             <>Sending & Saving...</>
           ) : (
             <>
-              <Save className="mr-2 h-4 w-4" /> Send & Save Feedback
+              <Save className="mr-2 h-4 w-4" /> Send Feedback
             </>
           )}
         </Button>
