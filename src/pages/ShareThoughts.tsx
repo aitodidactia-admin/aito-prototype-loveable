@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabaseAnonKey } from "@/components/share-thoughts/SupabaseConfig";
 import ConfigErrorAlert from "@/components/share-thoughts/ConfigErrorAlert";
@@ -7,7 +6,6 @@ import FeatureDescription from "@/components/share-thoughts/FeatureDescription";
 import MessageForm from "@/components/share-thoughts/MessageForm";
 
 const ShareThoughts = () => {
-  const [testMode, setTestMode] = useState(false);
   const isDevelopment = import.meta.env.DEV;
 
   return (
@@ -24,7 +22,7 @@ const ShareThoughts = () => {
 
           <FeatureDescription />
 
-          <MessageForm testMode={testMode} isDevelopment={isDevelopment} />
+          <MessageForm testMode={false} isDevelopment={isDevelopment} />
         </CardContent>
       </Card>
     </div>

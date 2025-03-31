@@ -2,24 +2,20 @@
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Save, Eye } from "lucide-react";
+import { Save } from "lucide-react";
 
 interface MessageInputFormProps {
   message: string;
   setMessage: (message: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  onPreview: () => void;
   isLoading: boolean;
-  consoleOutput: string[];
 }
 
 const MessageInputForm = ({
   message,
   setMessage,
   onSubmit,
-  onPreview,
   isLoading,
-  consoleOutput,
 }: MessageInputFormProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -44,16 +40,6 @@ const MessageInputForm = ({
               <Save className="mr-2 h-4 w-4" /> Send Feedback
             </>
           )}
-        </Button>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onPreview}
-          disabled={!message.trim() || isLoading}
-          className="flex-1 sm:flex-initial"
-        >
-          <Eye className="mr-2 h-4 w-4" /> Preview Email
         </Button>
       </div>
       
