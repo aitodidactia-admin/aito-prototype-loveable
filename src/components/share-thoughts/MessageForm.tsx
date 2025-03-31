@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -33,13 +32,16 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const consoleOutput = useConsoleLogger();
 
-  // Ensure the feedback table exists when the component mounts
   useEffect(() => {
     const checkTable = async () => {
-      console.log("Checking if feedback storage is ready...");
+      if (import.meta.env.DEV) {
+        console.log("Checking if feedback storage is ready...");
+      }
       
       if (isDevelopment) {
-        console.log("Development mode: Using localStorage for feedback storage");
+        if (import.meta.env.DEV) {
+          console.log("Development mode: Using localStorage for feedback storage");
+        }
         setIsTableReady(true);
         setTableCheckComplete(true);
         return;
@@ -50,9 +52,13 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       setTableCheckComplete(true);
       
       if (success) {
-        console.log("Feedback table is ready for use");
+        if (import.meta.env.DEV) {
+          console.log("Feedback table is ready for use");
+        }
       } else {
-        console.warn("Warning: Feedback table may not be properly set up");
+        if (import.meta.env.DEV) {
+          console.warn("Warning: Feedback table may not be properly set up");
+        }
         
         // Only show toast in development mode to avoid alarming end users
         if (isDevelopment) {
@@ -68,15 +74,12 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     checkTable();
   }, [isDevelopment, toast]);
 
-  // Load feedback data on mount and after submission
   useEffect(() => {
     const loadFeedback = async () => {
       setIsLoadingFeedback(true);
-      // Get local storage feedback
       const localFeedback = getStoredFeedback();
       setStoredFeedback(localFeedback);
       
-      // Try to get database feedback as well
       try {
         const dbFeedback = await viewDatabaseFeedback();
         if (dbFeedback.success && dbFeedback.data) {
@@ -104,13 +107,14 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
   const handlePreview = () => {
     setIsPreviewMode(true);
     
-    // Log the email content that would be sent
-    console.log("Email Preview:");
-    console.log(`To: ${EMAIL_TO}`);
-    console.log(`From: sarahdonoghue1@hotmail.com`);
-    console.log(`Subject: New Feedback from Aito user`);
-    console.log("HTML Content:");
-    console.log(formatEmailHtml());
+    if (import.meta.env.DEV) {
+      console.log("Email Preview:");
+      console.log(`To: ${EMAIL_TO}`);
+      console.log(`From: sarahdonoghue1@hotmail.com`);
+      console.log(`Subject: New Feedback from Aito user`);
+      console.log("HTML Content:");
+      console.log(formatEmailHtml());
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +132,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsLoading(true);
     
     try {
-      // Use our centralized function to handle the submission
       const result: FeedbackResult = await handleFeedbackSubmission(
         message,
         window.location.origin,
@@ -139,7 +142,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
       console.log("Feedback submission result:", result);
       
       if (result.success) {
-        // Success message varies based on where the feedback was saved
         let successMessage = "Your feedback has been saved";
         
         if (isDevelopment && testMode) {
@@ -181,7 +183,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     setIsPreviewMode(false);
   };
 
-  // Display feedback viewer
   const renderFeedbackViewer = () => {
     return (
       <div className="mt-6 space-y-4">
@@ -228,7 +229,6 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
     );
   };
 
-  // Show development mode details or success feedback
   if (isSubmitSuccess) {
     return (
       <div className="space-y-4">
@@ -263,7 +263,7 @@ const MessageForm = ({ testMode, isDevelopment }: MessageFormProps) => {
         consoleOutput={consoleOutput}
       />
       
-      {renderFeedbackViewer()}
+      {isDevelopment && renderFeedbackViewer()}
     </div>
   );
 };

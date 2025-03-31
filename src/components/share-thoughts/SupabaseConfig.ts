@@ -1,18 +1,18 @@
-
 import { createClient } from "@supabase/supabase-js";
 
-// Supabase configuration
-export const supabaseUrl = 'https://bnecasmvbfefzqjjwnys.supabase.co';
-export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIyMjQzOTYsImV4cCI6MjA1NzgwMDM5Nn0.3Kg7Rh_V8BGiTi1Q6ts9c7i2G6Xa23_sph0jmjgpmzE';
+// Use environment variables if available, otherwise fallback to the default values
+// In production, these should be set through the hosting platform
+export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bnecasmvbfefzqjjwnys.supabase.co';
+export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIyMjQzOTYsImV4cCI6MjA1NzgwMDM5Nn0.3Kg7Rh_V8BGiTi1Q6ts9c7i2G6Xa23_sph0jmjgpmzE';
 
-// Also define the service role key for Edge Functions
-export const supabaseServiceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I';
+// Service role key should be kept secure and only used in backend functions
+export const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 // Initialize Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Email configuration
-export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
+export const EMAIL_TO = import.meta.env.VITE_EMAIL_TO || "sarahdonoghue1@hotmail.com";
 
 // Define proper return types for feedback handling
 export interface FeedbackResult {
@@ -27,16 +27,20 @@ export interface FeedbackResult {
 // Function to view database feedback
 export async function viewDatabaseFeedback(): Promise<FeedbackResult> {
   try {
-    console.log("Attempting to fetch feedback from database...");
+    // Remove excessive logging in production
+    if (import.meta.env.DEV) {
+      console.log("Attempting to fetch feedback from database...");
+    }
     
-    // First check if we can query the table
     const { data, error } = await supabase
       .from('feedback')
       .select('*')
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error("Error fetching feedback from database:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching feedback from database:", error);
+      }
       return { 
         success: false, 
         error: error.message,
@@ -44,13 +48,17 @@ export async function viewDatabaseFeedback(): Promise<FeedbackResult> {
       };
     }
     
-    console.log("Successfully fetched feedback from database:", data);
+    if (import.meta.env.DEV) {
+      console.log("Successfully fetched feedback from database:", data);
+    }
     return { 
       success: true, 
       data: data || []
     };
   } catch (err) {
-    console.error("Exception fetching feedback:", err);
+    if (import.meta.env.DEV) {
+      console.error("Exception fetching feedback:", err);
+    }
     return { 
       success: false, 
       error: err.message,
@@ -62,7 +70,9 @@ export async function viewDatabaseFeedback(): Promise<FeedbackResult> {
 // Function to save feedback for development mode without using Edge Functions
 export async function saveFeedbackInDevelopment(message: string, fromWebsite: string): Promise<FeedbackResult> {
   try {
-    console.log("Development mode: Saving feedback to local storage...");
+    if (import.meta.env.DEV) {
+      console.log("Development mode: Saving feedback to local storage...");
+    }
     
     // First create an array to store the feedback if it doesn't exist
     const existingFeedback = localStorage.getItem('localFeedback');
@@ -81,7 +91,9 @@ export async function saveFeedbackInDevelopment(message: string, fromWebsite: st
     // Save back to localStorage
     localStorage.setItem('localFeedback', JSON.stringify(feedbackArray));
     
-    console.log("Development mode: Feedback saved to localStorage:", newFeedback);
+    if (import.meta.env.DEV) {
+      console.log("Development mode: Feedback saved to localStorage:", newFeedback);
+    }
     return { 
       success: true, 
       data: newFeedback,
@@ -90,7 +102,9 @@ export async function saveFeedbackInDevelopment(message: string, fromWebsite: st
       message: "Feedback saved to local storage"
     };
   } catch (err) {
-    console.error("Development mode: Error saving feedback to localStorage:", err);
+    if (import.meta.env.DEV) {
+      console.error("Development mode: Error saving feedback to localStorage:", err);
+    }
     return { 
       success: false, 
       error: err.message,
@@ -148,18 +162,24 @@ export async function saveFeedbackDirectlyToDb(message: string, fromWebsite: str
 export async function handleFeedbackSubmission(message: string, fromWebsite: string, isDevelopment: boolean, testMode: boolean): Promise<FeedbackResult> {
   // In development and test mode, first try database then fall back to localStorage
   if (isDevelopment && testMode) {
-    console.log("DEV MODE: Attempting to save directly to database first");
+    if (import.meta.env.DEV) {
+      console.log("DEV MODE: Attempting to save directly to database first");
+    }
     try {
       return await saveFeedbackDirectlyToDb(message, fromWebsite);
     } catch (err) {
-      console.log("DEV MODE: Direct database save failed, using localStorage");
+      if (import.meta.env.DEV) {
+        console.log("DEV MODE: Direct database save failed, using localStorage");
+      }
       return await saveFeedbackInDevelopment(message, fromWebsite);
     }
   }
   
   try {
     // In production or when dev mode with test mode off, use the Edge Function
-    console.log("Attempting to invoke Supabase function");
+    if (import.meta.env.DEV) {
+      console.log("Attempting to invoke Supabase function");
+    }
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: {
         to: EMAIL_TO,
@@ -168,14 +188,20 @@ export async function handleFeedbackSubmission(message: string, fromWebsite: str
       }
     });
     
-    console.log("Supabase function response:", { data, error });
+    if (import.meta.env.DEV) {
+      console.log("Supabase function response:", { data, error });
+    }
     
     if (error) {
-      console.error("Function error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Function error:", error);
+      }
       
       // In dev mode, fall back to direct database or localStorage if the function call fails
       if (isDevelopment) {
-        console.log("Falling back to direct database/localStorage in development mode after function failure");
+        if (import.meta.env.DEV) {
+          console.log("Falling back to direct database/localStorage in development mode after function failure");
+        }
         return await saveFeedbackDirectlyToDb(message, fromWebsite);
       }
       
@@ -195,11 +221,15 @@ export async function handleFeedbackSubmission(message: string, fromWebsite: str
       message: data?.message || "Unknown status"
     };
   } catch (err) {
-    console.error("Error submitting feedback:", err);
+    if (import.meta.env.DEV) {
+      console.error("Error submitting feedback:", err);
+    }
     
     // In dev mode, fall back to direct database or localStorage if there's any error
     if (isDevelopment) {
-      console.log("Falling back to direct database/localStorage in development mode after error");
+      if (import.meta.env.DEV) {
+        console.log("Falling back to direct database/localStorage in development mode after error");
+      }
       return await saveFeedbackDirectlyToDb(message, fromWebsite);
     }
     

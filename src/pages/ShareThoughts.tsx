@@ -11,11 +11,13 @@ const ShareThoughts = () => {
   const [testMode, setTestMode] = useState(false);
   const isDevelopment = import.meta.env.DEV;
 
-  // Add debug logging
+  // Add debug logging only in development mode
   useEffect(() => {
-    console.log("ShareThoughts component mounted");
-    console.log("Development mode:", isDevelopment);
-    console.log("Test mode:", testMode);
+    if (isDevelopment) {
+      console.log("ShareThoughts component mounted");
+      console.log("Development mode:", isDevelopment);
+      console.log("Test mode:", testMode);
+    }
   }, [isDevelopment, testMode]);
 
   return (
@@ -30,7 +32,9 @@ const ShareThoughts = () => {
             <DevelopmentModeAlert testMode={testMode} setTestMode={setTestMode} />
           )}
 
-          <ConfigErrorAlert supabaseAnonKey={supabaseAnonKey} />
+          {(!supabaseAnonKey || isDevelopment) && (
+            <ConfigErrorAlert supabaseAnonKey={supabaseAnonKey} />
+          )}
 
           <FeatureDescription />
 

@@ -8,8 +8,8 @@ import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 // Initialize the Supabase client for the initialization
-const initSupabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://bnecasmvbfefzqjjwnys.supabase.co'
-const initSupabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
+const initSupabaseUrl = Deno.env.get('SUPABASE_URL')
+const initSupabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const initSupabase = createClient(initSupabaseUrl, initSupabaseKey)
 
 serve(async (req) => {
@@ -21,19 +21,18 @@ serve(async (req) => {
   try {
     const { to, message, from_website } = await req.json()
     
-    // Hotmail SMTP settings
+    // Email settings from environment variables
     const EMAIL_HOST = Deno.env.get('EMAIL_HOST') || 'smtp-mail.outlook.com'
     const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || 'sarahdonoghue1@hotmail.com'
     const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
-    const EMAIL_FROM = 'sarahdonoghue1@hotmail.com'
+    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'sarahdonoghue1@hotmail.com'
     
-    // Initialize Supabase client with environment variables or fallback to config values
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://bnecasmvbfefzqjjwnys.supabase.co'
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWNhc212YmZlZnpxamp3bnlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjIyNDM5NiwiZXhwIjoyMDU3ODAwMzk2fQ.RB9OzU3kNhU0ROJo5QMaWJVOy83VMCQT9Tva1c1jz5I'
+    // Initialize Supabase client with environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Save the feedback to the database - simplified without authentication checks
-    console.log("Attempting to insert feedback...")
+    // Save the feedback to the database
     let databaseSaved = false
     try {
       const { error: insertError } = await supabase.from('feedback').insert({
@@ -44,7 +43,6 @@ serve(async (req) => {
       if (insertError) {
         console.error('Error saving feedback to database:', insertError)
       } else {
-        console.log("Feedback saved successfully to database")
         databaseSaved = true
       }
     } catch (dbError) {
@@ -52,7 +50,6 @@ serve(async (req) => {
     }
     
     // Create SMTP client
-    console.log("Attempting to send email...")
     const client = new SmtpClient()
     
     // Only try to send email if password exists
@@ -82,12 +79,9 @@ serve(async (req) => {
         
         await client.close()
         emailSent = true
-        console.log("Email sent successfully")
       } catch (emailError) {
         console.error("Error sending email:", emailError)
       }
-    } else {
-      console.log("Email password not set, skipping email send")
     }
     
     return new Response(

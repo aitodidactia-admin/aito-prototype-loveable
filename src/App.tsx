@@ -10,13 +10,17 @@ import About from "./pages/About";
 import ShareThoughts from "./pages/ShareThoughts";
 import NotFound from "./pages/NotFound";
 
-// Add debug logging to see if App component mounts
-console.log("App component mounting");
+// Add debug logging only in development mode
+if (import.meta.env.DEV) {
+  console.log("App component mounting");
+}
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log("App rendering");
+  if (import.meta.env.DEV) {
+    console.log("App rendering");
+  }
   
   return (
     <QueryClientProvider client={queryClient}>
