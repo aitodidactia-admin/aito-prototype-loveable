@@ -3,7 +3,6 @@ import React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, Eye } from "lucide-react";
-import ConsoleLogViewer from "./ConsoleLogViewer";
 
 interface MessageInputFormProps {
   message: string;
@@ -57,8 +56,6 @@ const MessageInputForm = ({
           <Eye className="mr-2 h-4 w-4" /> Preview Email
         </Button>
       </div>
-      
-      <ConsoleLogViewer consoleOutput={consoleOutput} />
       
       <p className="text-center text-muted-foreground mt-4">
         Thank you for your interest in Aito, we look forward to hearing from you on how you find the experience.

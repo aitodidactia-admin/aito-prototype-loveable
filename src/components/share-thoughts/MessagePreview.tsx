@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 interface MessagePreviewProps {
   emailTo: string;
   message: string;
-  onSend: (e: React.FormEvent) => void;  // Updated to match handleSubmit's signature
+  onSend: (e: React.FormEvent) => void;
   onBack: () => void;
   isLoading: boolean;
   formatEmailHtml: () => string;
@@ -55,17 +55,6 @@ const MessagePreview = ({
           </Button>
         </div>
       </Card>
-      
-      {consoleOutput.length > 0 && (
-        <Card className="p-4 border bg-black text-white font-mono text-sm">
-          <h4 className="text-lg mb-2 text-white/80">Console Output</h4>
-          <div className="overflow-x-auto">
-            {consoleOutput.map((log, i) => (
-              <div key={i} className="whitespace-pre-wrap mb-1">{log}</div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 };

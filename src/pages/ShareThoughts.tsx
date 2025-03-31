@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabaseAnonKey } from "@/components/share-thoughts/SupabaseConfig";
 import DevelopmentModeAlert from "@/components/share-thoughts/DevelopmentModeAlert";
@@ -10,15 +10,6 @@ import MessageForm from "@/components/share-thoughts/MessageForm";
 const ShareThoughts = () => {
   const [testMode, setTestMode] = useState(false);
   const isDevelopment = import.meta.env.DEV;
-
-  // Add debug logging only in development mode
-  useEffect(() => {
-    if (isDevelopment) {
-      console.log("ShareThoughts component mounted");
-      console.log("Development mode:", isDevelopment);
-      console.log("Test mode:", testMode);
-    }
-  }, [isDevelopment, testMode]);
 
   return (
     <div className="container mx-auto px-4 pt-24 pb-12">
