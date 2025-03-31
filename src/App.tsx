@@ -4,22 +4,34 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navigation from "./components/Navigation";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import ShareThoughts from "./pages/ShareThoughts";
 import NotFound from "./pages/NotFound";
 
-// Add debug logging only in development mode
-if (import.meta.env.DEV) {
-  console.log("App component mounting");
-}
-
-const queryClient = new QueryClient();
+// Create a client with better error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => {
-  if (import.meta.env.DEV) {
-    console.log("App rendering");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Ensure the app is fully loaded before rendering content
+    setIsLoaded(true);
+  }, []);
+  
+  if (!isLoaded) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
   return (
