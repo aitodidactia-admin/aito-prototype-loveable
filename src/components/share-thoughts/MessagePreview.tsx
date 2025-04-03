@@ -38,7 +38,7 @@ const MessagePreview = ({
         
         <div className="space-y-2 text-sm mb-4">
           <div><strong>To:</strong> {emailTo}</div>
-          <div><strong>From:</strong> sarahdonoghue1@hotmail.com</div>
+          <div><strong>From:</strong> aito@aitodidactia.uk</div>
           <div><strong>Subject:</strong> New Feedback from Aito user</div>
         </div>
         
