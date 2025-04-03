@@ -7,17 +7,19 @@ const ShareThoughts = () => {
   const isDevelopment = import.meta.env.DEV;
 
   return (
-    <div className="container mx-auto px-4 pt-24 pb-12 min-h-screen" style={{ backgroundColor: "#9966cc" }}>
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-3xl">Share Your Thoughts</CardTitle>
-          <CardDescription>Connect with us and help shape the future of Aito</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <FeatureDescription />
-          <MessageForm testMode={false} isDevelopment={isDevelopment} />
-        </CardContent>
-      </Card>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#9966cc" }}>
+      <div className="container mx-auto px-4 pt-24 pb-12">
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-3xl">Share Your Thoughts</CardTitle>
+            <CardDescription>Connect with us and help shape the future of Aito</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <FeatureDescription />
+            <MessageForm testMode={false} isDevelopment={isDevelopment} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
