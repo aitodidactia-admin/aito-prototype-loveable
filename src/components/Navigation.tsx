@@ -1,19 +1,30 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const menuItems = [
     { label: "Home", path: "/" },
     { label: "About", path: "/about" },
+    { label: "Share your thoughts", path: "/share-thoughts" },
   ];
 
   const NavContent = () => (
@@ -23,7 +34,9 @@ const Navigation = () => {
           <Button
             key={item.path}
             variant="ghost"
-            className="text-white hover:bg-white/10 hover:text-white"
+            className={`text-white hover:bg-white/10 hover:text-white ${
+              location.pathname === item.path ? "bg-white/10" : ""
+            }`}
             asChild
             onClick={() => setIsOpen(false)}
           >
@@ -34,16 +47,6 @@ const Navigation = () => {
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          className="text-white hover:bg-white/10 hover:text-white"
-          asChild 
-          onClick={() => setIsOpen(false)}
-        >
-          <Link to="/share-thoughts">
-            Share your thoughts
-          </Link>
-        </Button>
         <Button 
           className="bg-white/90 text-black hover:bg-white"
           asChild
