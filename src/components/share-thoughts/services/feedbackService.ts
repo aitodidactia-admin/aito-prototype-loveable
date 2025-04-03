@@ -76,7 +76,6 @@ export async function handleFeedbackSubmission(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: "Aito User", // Default name for the user
         comment: message,
         from_website: fromWebsite,
       })
