@@ -2,22 +2,17 @@
 import React from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { supabaseUrl } from "./SupabaseConfig";
 
-interface ConfigErrorAlertProps {
-  supabaseAnonKey: string;
-}
-
-const ConfigErrorAlert = ({ supabaseAnonKey }: ConfigErrorAlertProps) => {
-  if (supabaseAnonKey) return null;
-  
+const ConfigErrorAlert = () => {
+  // Since we're not using Supabase anymore, we'll adapt this component
+  // to provide information about the Netlify functions setup
   return (
-    <Alert variant="destructive">
+    <Alert className="mb-4">
       <Info className="h-4 w-4" />
-      <AlertTitle>Configuration Missing</AlertTitle>
+      <AlertTitle>Information</AlertTitle>
       <AlertDescription>
-        <p>Supabase anon key is missing. Please set VITE_SUPABASE_ANON_KEY in your .env file or environment variables.</p>
-        <p className="mt-2">Supabase URL is set to: {supabaseUrl}</p>
+        <p>This app uses Netlify Functions for processing feedback submissions.</p>
+        <p className="mt-2">In development mode, feedback is stored in localStorage.</p>
       </AlertDescription>
     </Alert>
   );
