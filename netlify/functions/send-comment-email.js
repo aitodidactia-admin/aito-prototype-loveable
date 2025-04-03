@@ -18,15 +18,22 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { name, comment } = JSON.parse(event.body);
+    const { comment, from_website } = JSON.parse(event.body);
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
+    // Log environment info for debugging (will be visible in Netlify function logs)
+    console.log('Environment variables available:', Object.keys(process.env).filter(key => !key.includes('SECRET')));
+    console.log('RESEND_API_KEY exists:', !!RESEND_API_KEY);
+    
     if (!RESEND_API_KEY) {
       console.error('Missing RESEND_API_KEY environment variable');
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'Missing API key' }),
+        body: JSON.stringify({ 
+          error: 'Missing API key',
+          envVarsAvailable: Object.keys(process.env).filter(key => !key.includes('SECRET')).length
+        }),
       };
     }
 
@@ -40,7 +47,7 @@ exports.handler = async (event) => {
         from: "Comment Box <noreply@yourdomain.com>",
         to: "sarahdonoghue1@hotmail.com",
         subject: "New Comment Submitted",
-        html: `<strong>${name}</strong> said:<br/><br/>${comment}`,
+        html: `<strong>New comment from website:</strong><br/><br/>${comment}<br/><br/><em>Sent from: ${from_website}</em>`,
       }),
     });
 
@@ -62,7 +69,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
     };
   }
 };

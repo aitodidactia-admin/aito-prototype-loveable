@@ -70,6 +70,8 @@ export async function handleFeedbackSubmission(
       console.log("Attempting to invoke Netlify function");
     }
     
+    console.log("Sending comment to Netlify function:", { message, from_website: fromWebsite });
+    
     const response = await fetch('/.netlify/functions/send-comment-email', {
       method: 'POST',
       headers: {
@@ -81,16 +83,24 @@ export async function handleFeedbackSubmission(
       })
     });
     
+    // Get the full response text for better debugging
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      // Try to parse as JSON if possible
+      data = JSON.parse(responseText);
+    } catch (e) {
+      // If not JSON, use the raw text
+      data = { rawResponse: responseText };
+    }
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Function error: ${response.status} ${errorText}`);
+      console.error("Netlify function error response:", data);
+      throw new Error(`Function error: ${response.status} ${JSON.stringify(data)}`);
     }
     
-    const data = await response.json();
-    
-    if (import.meta.env.DEV) {
-      console.log("Netlify function response:", data);
-    }
+    console.log("Netlify function response:", data);
     
     return { 
       success: data?.success || false, 
@@ -99,15 +109,11 @@ export async function handleFeedbackSubmission(
       message: "Email sent successfully"
     };
   } catch (err) {
-    if (import.meta.env.DEV) {
-      console.error("Error submitting feedback:", err);
-    }
+    console.error("Error submitting feedback:", err);
     
     // In dev mode, fall back to localStorage if there's any error
     if (isDevelopment) {
-      if (import.meta.env.DEV) {
-        console.log("Falling back to localStorage in development mode after error");
-      }
+      console.log("Falling back to localStorage in development mode after error");
       return await saveFeedbackInDevelopment(message, fromWebsite);
     }
     
