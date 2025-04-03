@@ -1,7 +1,5 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabaseAnonKey } from "@/components/share-thoughts/SupabaseConfig";
-import ConfigErrorAlert from "@/components/share-thoughts/ConfigErrorAlert";
 import FeatureDescription from "@/components/share-thoughts/FeatureDescription";
 import MessageForm from "@/components/share-thoughts/MessageForm";
 
@@ -16,12 +14,7 @@ const ShareThoughts = () => {
           <CardDescription>Connect with us and help shape the future of Aito</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {(!supabaseAnonKey || isDevelopment) && (
-            <ConfigErrorAlert supabaseAnonKey={supabaseAnonKey} />
-          )}
-
           <FeatureDescription />
-
           <MessageForm testMode={false} isDevelopment={isDevelopment} />
         </CardContent>
       </Card>

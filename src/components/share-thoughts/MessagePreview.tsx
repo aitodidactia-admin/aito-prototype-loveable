@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import { EMAIL_TO } from "./MessageForm";
 
 interface MessagePreviewProps {
   emailTo: string;

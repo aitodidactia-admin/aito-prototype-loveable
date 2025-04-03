@@ -1,70 +1,98 @@
 
-import { supabase } from "../supabase/supabaseClient";
 import { FeedbackResult } from "../types/feedbackTypes";
-import { EMAIL_TO } from "../supabase/supabaseClient";
-import { saveFeedbackDirectlyToDb, saveFeedbackInDevelopment } from "./databaseService";
+import { EMAIL_TO } from "../MessageForm";
 
-// Function to handle feedback submission in development
+// Function to save feedback in development mode using localStorage
+function saveFeedbackInDevelopment(message: string, fromWebsite: string): Promise<FeedbackResult> {
+  try {
+    if (import.meta.env.DEV) {
+      console.log("Development mode: Saving feedback to local storage...");
+    }
+    
+    // First create an array to store the feedback if it doesn't exist
+    const existingFeedback = localStorage.getItem('localFeedback');
+    const feedbackArray = existingFeedback ? JSON.parse(existingFeedback) : [];
+    
+    // Add the new feedback
+    const newFeedback = {
+      id: crypto.randomUUID(),
+      message: message,
+      from_website: fromWebsite,
+      created_at: new Date().toISOString()
+    };
+    
+    feedbackArray.push(newFeedback);
+    
+    // Save back to localStorage
+    localStorage.setItem('localFeedback', JSON.stringify(feedbackArray));
+    
+    if (import.meta.env.DEV) {
+      console.log("Development mode: Feedback saved to localStorage:", newFeedback);
+    }
+    return Promise.resolve({ 
+      success: true, 
+      data: newFeedback,
+      databaseSaved: true,
+      emailSent: false,
+      message: "Feedback saved to local storage"
+    });
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.error("Development mode: Error saving feedback to localStorage:", err);
+    }
+    return Promise.resolve({ 
+      success: false, 
+      error: err.message,
+      databaseSaved: false,
+      emailSent: false
+    });
+  }
+}
+
+// Function to handle feedback submission
 export async function handleFeedbackSubmission(
   message: string, 
   fromWebsite: string, 
   isDevelopment: boolean, 
   testMode: boolean
 ): Promise<FeedbackResult> {
-  // In development and test mode, first try database then fall back to localStorage
-  if (isDevelopment && testMode) {
+  // In development mode or test mode, use localStorage
+  if (isDevelopment || testMode) {
     if (import.meta.env.DEV) {
-      console.log("DEV MODE: Attempting to save directly to database first");
+      console.log("DEV MODE: Using localStorage for feedback");
     }
-    try {
-      return await saveFeedbackDirectlyToDb(message, fromWebsite);
-    } catch (err) {
-      if (import.meta.env.DEV) {
-        console.log("DEV MODE: Direct database save failed, using localStorage");
-      }
-      return await saveFeedbackInDevelopment(message, fromWebsite);
-    }
+    return await saveFeedbackInDevelopment(message, fromWebsite);
   }
   
   try {
-    // In production or when dev mode with test mode off, use the Edge Function
+    // In production, use the Netlify function
     if (import.meta.env.DEV) {
-      console.log("Attempting to invoke Supabase function");
+      console.log("Attempting to invoke Netlify function");
     }
-    const { data, error } = await supabase.functions.invoke('send-email', {
-      body: {
+    
+    const response = await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         to: EMAIL_TO,
         message: message,
         from_website: fromWebsite,
-      }
+      })
     });
     
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Function error: ${response.status} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
     if (import.meta.env.DEV) {
-      console.log("Supabase function response:", { data, error });
+      console.log("Netlify function response:", data);
     }
     
-    if (error) {
-      if (import.meta.env.DEV) {
-        console.error("Function error:", error);
-      }
-      
-      // In dev mode, fall back to direct database or localStorage if the function call fails
-      if (isDevelopment) {
-        if (import.meta.env.DEV) {
-          console.log("Falling back to direct database/localStorage in development mode after function failure");
-        }
-        return await saveFeedbackDirectlyToDb(message, fromWebsite);
-      }
-      
-      return { 
-        success: false, 
-        error: error.message,
-        databaseSaved: false,
-        emailSent: false
-      };
-    }
-    
-    // Handle the function response
     return { 
       success: data?.success || false, 
       emailSent: data?.emailSent || false,
@@ -76,12 +104,12 @@ export async function handleFeedbackSubmission(
       console.error("Error submitting feedback:", err);
     }
     
-    // In dev mode, fall back to direct database or localStorage if there's any error
+    // In dev mode, fall back to localStorage if there's any error
     if (isDevelopment) {
       if (import.meta.env.DEV) {
-        console.log("Falling back to direct database/localStorage in development mode after error");
+        console.log("Falling back to localStorage in development mode after error");
       }
-      return await saveFeedbackDirectlyToDb(message, fromWebsite);
+      return await saveFeedbackInDevelopment(message, fromWebsite);
     }
     
     return { 
