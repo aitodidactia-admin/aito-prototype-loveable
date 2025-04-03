@@ -4,7 +4,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 // Initialize the Supabase client for the initialization
@@ -20,12 +19,6 @@ serve(async (req) => {
 
   try {
     const { to, message, from_website } = await req.json()
-    
-    // Email settings from environment variables
-    const EMAIL_HOST = Deno.env.get('EMAIL_HOST') || 'smtp-mail.outlook.com'
-    const EMAIL_USERNAME = Deno.env.get('EMAIL_USERNAME') || 'sarahdonoghue1@hotmail.com'
-    const EMAIL_PASSWORD = Deno.env.get('EMAIL_PASSWORD') || ''
-    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'sarahdonoghue1@hotmail.com'
     
     // Initialize Supabase client with environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -49,38 +42,42 @@ serve(async (req) => {
       console.error('Database operation failed:', dbError)
     }
     
-    // Create SMTP client
-    const client = new SmtpClient()
-    
-    // Only try to send email if password exists
+    // Only try to send email if Resend API key exists
     let emailSent = false
-    if (EMAIL_PASSWORD && EMAIL_PASSWORD.trim() !== '') {
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'aito@aitodidactia.uk'
+    
+    if (RESEND_API_KEY && RESEND_API_KEY.trim() !== '') {
       try {
-        await client.connectTLS({
-          hostname: EMAIL_HOST,
-          port: 587,
-          username: EMAIL_USERNAME,
-          password: EMAIL_PASSWORD,
-        })
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: EMAIL_FROM,
+            to: to,
+            subject: 'New Feedback from Aito user',
+            html: `
+              <h2>New Feedback from Aito user</h2>
+              <p><strong>From:</strong> ${from_website}</p>
+              <p><strong>Message:</strong></p>
+              <p>${message.replace(/\n/g, '<br>')}</p>
+            `,
+          })
+        });
+
+        const resendData = await resendResponse.json();
         
-        // Send email
-        await client.send({
-          from: EMAIL_FROM,
-          to: to,
-          subject: `New Feedback from Aito user`,
-          content: `Message: ${message}`,
-          html: `
-            <h2>New Feedback from Aito user</h2>
-            <p><strong>From:</strong> ${from_website}</p>
-            <p><strong>Message:</strong></p>
-            <p>${message.replace(/\n/g, '<br>')}</p>
-          `,
-        })
-        
-        await client.close()
-        emailSent = true
+        if (resendResponse.ok) {
+          emailSent = true;
+          console.log("Email sent successfully via Resend:", resendData);
+        } else {
+          console.error("Resend API error:", resendData);
+        }
       } catch (emailError) {
-        console.error("Error sending email:", emailError)
+        console.error("Error sending email via Resend:", emailError)
       }
     }
     
@@ -92,7 +89,7 @@ serve(async (req) => {
         message: emailSent 
           ? "Message saved and email sent" 
           : (databaseSaved 
-              ? "Message saved but email not sent (no password configured)" 
+              ? "Message saved but email not sent (no API key configured)" 
               : "Failed to save message")
       }),
       { 
