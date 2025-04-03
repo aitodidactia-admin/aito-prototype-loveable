@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import SuccessFeedback from "./SuccessFeedback";
@@ -7,7 +6,7 @@ import { useConsoleLogger } from "./useConsoleLogger";
 import { handleFeedbackSubmission } from "./services/feedbackService";
 
 // Email configuration - updated recipient
-export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
+export const EMAIL_TO = "admin@aitodidactia.uk";
 
 interface MessageFormProps {
   testMode: boolean;

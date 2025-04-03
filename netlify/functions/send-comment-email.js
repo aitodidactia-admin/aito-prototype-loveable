@@ -44,8 +44,8 @@ exports.handler = async (event) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Comment Box <noreply@yourdomain.com>",
-        to: "sarahdonoghue1@hotmail.com",
+        from: "Admin <admin@aitodidactia.uk>",
+        to: "admin@aitodidactia.uk",
         subject: "New Comment Submitted",
         html: `<strong>New comment from website:</strong><br/><br/>${comment}<br/><br/><em>Sent from: ${from_website}</em>`,
       }),

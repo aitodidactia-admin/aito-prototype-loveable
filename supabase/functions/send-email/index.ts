@@ -45,7 +45,7 @@ serve(async (req) => {
     // Only try to send email if Resend API key exists
     let emailSent = false
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'aito@aitodidactia.uk'
+    const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'admin@aitodidactia.uk'
     
     if (RESEND_API_KEY && RESEND_API_KEY.trim() !== '') {
       try {
@@ -57,7 +57,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             from: EMAIL_FROM,
-            to: to,
+            to: 'admin@aitodidactia.uk', // Updated to use the new email
             subject: 'New Feedback from Aito user',
             html: `
               <h2>New Feedback from Aito user</h2>
