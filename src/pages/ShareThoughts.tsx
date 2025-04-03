@@ -9,7 +9,7 @@ const ShareThoughts = () => {
   const isDevelopment = import.meta.env.DEV;
 
   return (
-    <div className="container mx-auto px-4 pt-24 pb-12 min-h-screen bg-purple-600/50 dark:bg-purple-900/50">
+    <div className="container mx-auto px-4 pt-24 pb-12 min-h-screen" style={{ backgroundColor: "#9966cc" }}>
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle className="text-3xl">Share Your Thoughts</CardTitle>
