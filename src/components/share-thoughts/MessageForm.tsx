@@ -6,7 +6,7 @@ import MessageInputForm from "./MessageInputForm";
 import { useConsoleLogger } from "./useConsoleLogger";
 import { handleFeedbackSubmission } from "./services/feedbackService";
 
-// Email configuration - replace with your preferred recipient
+// Email configuration - updated recipient
 export const EMAIL_TO = "sarahdonoghue1@hotmail.com";
 
 interface MessageFormProps {

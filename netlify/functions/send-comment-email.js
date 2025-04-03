@@ -38,7 +38,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         from: "Comment Box <noreply@yourdomain.com>",
-        to: "admin@yourdomain.com",
+        to: "sarahdonoghue1@hotmail.com",
         subject: "New Comment Submitted",
         html: `<strong>${name}</strong> said:<br/><br/>${comment}`,
       }),
