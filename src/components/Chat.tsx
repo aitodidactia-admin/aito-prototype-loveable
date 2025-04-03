@@ -56,13 +56,13 @@ const Chat = () => {
           {isListening && (
             <div className="absolute inset-0 pointer-events-none">
               {/* Outer purple circle */}
-              <div className="absolute inset-0 -m-8 rounded-full border border-purple-400/60 animate-ping-slow"></div>
+              <div className="absolute inset-0 -m-10 rounded-full border-2 border-purple-400/80 animate-ping-slow"></div>
               
               {/* Middle white circle */}
-              <div className="absolute inset-0 -m-5 rounded-full border border-white/60 animate-ping-medium"></div>
+              <div className="absolute inset-0 -m-6 rounded-full border-2 border-white/70 animate-ping-medium"></div>
               
               {/* Inner purple circle */}
-              <div className="absolute inset-0 -m-2 rounded-full border border-purple-400/60 animate-ping-fast"></div>
+              <div className="absolute inset-0 -m-3 rounded-full border-2 border-purple-400/90 animate-ping-fast"></div>
             </div>
           )}
         </div>
