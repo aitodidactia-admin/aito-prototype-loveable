@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 const About = () => {
   return (
-    <div className="min-h-screen pt-20 px-4 bg-purple-100/80 dark:bg-purple-900/20">
+    <div className="min-h-screen pt-20 px-4 bg-purple-400/50 dark:bg-purple-700/40">
       <Card className="max-w-4xl mx-auto p-8">
         <h1 className="text-3xl font-semibold mb-6">About Aitodidactia</h1>
         

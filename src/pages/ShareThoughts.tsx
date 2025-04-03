@@ -9,7 +9,7 @@ const ShareThoughts = () => {
   const isDevelopment = import.meta.env.DEV;
 
   return (
-    <div className="container mx-auto px-4 pt-24 pb-12 min-h-screen bg-purple-100/80 dark:bg-purple-900/20">
+    <div className="container mx-auto px-4 pt-24 pb-12 min-h-screen bg-purple-400/50 dark:bg-purple-700/40">
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle className="text-3xl">Share Your Thoughts</CardTitle>
