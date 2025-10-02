@@ -26,7 +26,7 @@ const Index = () => {
           </Alert>
           <div className="flex justify-center">
             <Link to="/share-thoughts">
-              <Button variant="default">Share Your Thoughts Instead</Button>
+              <Button variant="default">Contact Instead</Button>
             </Link>
           </div>
         </div>

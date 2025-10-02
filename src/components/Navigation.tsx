@@ -24,7 +24,7 @@ const Navigation = () => {
   const menuItems = [
     { label: "Home", path: "/" },
     { label: "About", path: "/about" },
-    { label: "Share your thoughts", path: "/share-thoughts" },
+    { label: "Contact", path: "/share-thoughts" },
   ];
 
   const NavContent = () => (
