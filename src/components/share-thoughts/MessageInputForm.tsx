@@ -21,7 +21,6 @@ const MessageInputForm = ({
     <form onSubmit={onSubmit} className="space-y-4">
       <Textarea 
         className="min-h-[150px]"
-        placeholder="Please share your name and email address to become a Beta Tester or if you're sending feedback please just share your feedback here, however if you want to work with us then please reach out to us and we can share some more information with you"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         disabled={isLoading}
