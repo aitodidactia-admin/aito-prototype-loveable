@@ -36,7 +36,7 @@ const About = () => {
               </p>
 
               <p>
-                And why is it different? Books, search engines, podcasts although useful are not directed, and not specific. The reader or listener is left to process lots of information, sift it, and then convert that information into something that they may or may not be able to implement in their lives. Aito works with the user one-to-one to pinpoint an area of life or mental fitness to be strengthened, shares specific bite sized Precepts that the user can grasp manageably, helps them to set an intention to work towards. This is, like most things in life, an ongoing process; so Aito meets with the user from week to week to maintain progress.
+                And why is it different? Books, search engines, podcasts although useful are not directed, and not specific. The reader or listener is left to process lots of information, sift it, and then convert that information into something that they may or may not be able to implement in their lives. Aito works with the user one-to-one to pinpoint an area of life or mental fitness to be strengthened, shares specific bite sized Precepts that the user can grasp manageably, helps them to set an intention to work towards. This is, like most things in life, an ongoing process; so Aito meets with the user to maintain progress.
               </p>
 
               <p className="italic pt-4">
