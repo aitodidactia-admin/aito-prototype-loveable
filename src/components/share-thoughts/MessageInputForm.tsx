@@ -41,10 +41,6 @@ const MessageInputForm = ({
           )}
         </Button>
       </div>
-      
-      <p className="text-center text-muted-foreground mt-4">
-        Thank you for your interest in Aito, we look forward to hearing from you on how you find the experience.
-      </p>
     </form>
   );
 };
