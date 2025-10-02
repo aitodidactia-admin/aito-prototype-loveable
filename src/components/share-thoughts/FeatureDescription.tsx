@@ -10,7 +10,7 @@ const FeatureDescription = () => {
         <div>
           <h3 className="text-lg font-medium mb-2">Join the Beta Test</h3>
           <p className="text-muted-foreground">
-            Just send us your first name and email address, and one of the team will be in touch. 
+            Just send us your first name and email address, and one of the human team will be in touch.
             It's free to join and use the Aito Beta Test, but contributions are extremely important 
             in supporting our development and running costs. If you feel you'd like to help, please 
             use the 'Donate' Button above…
