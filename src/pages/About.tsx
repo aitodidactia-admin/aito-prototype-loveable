@@ -32,7 +32,7 @@ const About = () => {
               </p>
 
               <p>
-                The Aito service incorporates real, anonymous, examples from actual users which are actively validated against established philosophies. This makes Aito's knowledge and suggestions as relevant as they can be for a modern audience.
+                The Aito service learns from real, anonymous, examples from actual users which are actively validated against established philosophies. This makes Aito's knowledge and suggestions as relevant as they can be for a modern audience.
               </p>
 
               <p>
