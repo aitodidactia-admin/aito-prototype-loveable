@@ -21,7 +21,7 @@ const About = () => {
           </p>
 
           <p className="italic">
-            Feel free to call aito for a chat about us…
+            Feel free to call Aito for a chat about us…
           </p>
 
           <div className="pt-6">
@@ -40,7 +40,7 @@ const About = () => {
               </p>
 
               <p className="italic pt-4">
-                Feel free to call aito for a chat if you want to know more…
+                Feel free to call Aito for a chat if you want to know more…
               </p>
             </div>
           </div>
