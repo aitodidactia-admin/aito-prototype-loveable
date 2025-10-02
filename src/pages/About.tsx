@@ -13,7 +13,7 @@ const About = () => {
           </p>
 
           <p>
-            We are a team of highly experienced developers, AI Prompt engineers, teachers, public speakers, personal coaches, and researchers who share the human values of personal development, equality and charity.
+            We are a team of developers, AI Prompt engineers, teachers, public speakers, personal coaches, and researchers who share the human values of personal development, equality and charity.
           </p>
 
           <p className="font-medium">
